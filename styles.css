@@ -346,3 +346,41 @@ body[data-faction="aureon"]{--faction:#d8823d;--faction-shadow:#a4592a;--faction
 .draft-island-controls button:active{transform:translateY(2px)}
 @media(max-width:390px){.dialog-card:has(.draft-list){padding:11px 12px}
  .draft-list{max-height:54dvh}.draft-island-name{font-size:14px}}
+
+
+/* ARCHIPEL v0.7 — highlighted touch targets and expedition decision feedback. */
+body:has(.retreat-target) .island-label:not(.retreat-target){opacity:.34;filter:saturate(.50)}
+.island-label.retreat-target{
+ opacity:1!important;visibility:visible!important;pointer-events:auto!important;
+ z-index:7;cursor:pointer;touch-action:manipulation;
+ border:2px solid #d1b2ff;outline:2px solid #fff9dc;
+ color:#523984;box-shadow:0 0 0 4px #bb9ce644,0 4px 16px #af7ee8d9;
+ background:linear-gradient(175deg,#fffcf0,#efddff);
+ padding:7px 9px;border-radius:12px;
+ animation:retreatGlow 1.35s ease-in-out infinite alternate;
+}
+body[data-faction="aureon"] .island-label.retreat-target{
+ border-color:#ffba77;color:#8a502c;box-shadow:0 0 0 4px #ffd09555,0 4px 16px #f4a54ed9;
+ background:linear-gradient(175deg,#fffcf2,#ffe6cb)
+}
+.island-label.retreat-target b{font-size:12px}
+.island-label.retreat-target span{color:inherit}
+@keyframes retreatGlow{0%{filter:brightness(1);transform:translate(-50%,26px) scale(1)}
+100%{filter:brightness(1.18) drop-shadow(0 0 8px #ffcba0);transform:translate(-50%,20px) scale(1.06)}}
+.expedition-preview{border-radius:17px;padding:13px 12px 15px;background:#fffaf0;
+ border:1px solid #e5cc97;box-shadow:inset 0 2px 4px #fffee8;text-align:left;margin:6px 0 14px;}
+.expedition-terrain{display:flex;align-items:center;justify-content:space-between;gap:7px;font-weight:900;font-size:13px;color:#43596b}
+.expedition-terrain strong{background:#f4e4c5;color:#936229;padding:5px 8px;border-radius:99px;font-size:12px;white-space:nowrap}
+.expedition-equation{display:grid;grid-template-columns:1fr 1fr auto;gap:5px;align-items:center;margin:14px 0 9px}
+.expedition-equation span,.expedition-equation strong{padding:8px 6px;background:#eff1ec;border-radius:10px;text-align:center;font-weight:1000;font-size:12px;color:#426174}
+.expedition-equation strong{background:#ffdc9c;color:#81501c;font-size:17px}
+.expedition-level{font-size:11px;color:#66818b;font-weight:850;margin-bottom:12px}
+.expedition-success{display:flex;justify-content:space-between;align-items:center;color:#40606c;font-weight:900}
+.expedition-success strong{font-size:26px;color:var(--faction-shadow)}
+.expedition-footnote{font-size:11px;color:#6c7a71;line-height:1.5;font-weight:750;margin-top:7px}
+.expedition-roll-score{margin-top:18px;padding:11px;border-radius:13px;font-size:15px;
+ color:var(--faction-shadow);background:var(--faction-light);font-weight:950}
+.dialog-card:has(.expedition-preview){width:min(96vw,440px)}
+.dialog-card:has(.expedition-preview) .dialog-text{font-size:12px;margin-bottom:8px}
+@media(max-width:360px){.expedition-equation span{font-size:10px;padding:7px 4px}}
+@media(prefers-reduced-motion:reduce){.island-label.retreat-target{animation:none}}
