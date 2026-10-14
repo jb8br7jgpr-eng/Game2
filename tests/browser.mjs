@@ -45,6 +45,36 @@ try{
  assert.ok(current.startsWith("À "),"correct turn displayed");
  assert.equal(await page.locator(".island-label").count(),10);
  await page.screenshot({path:"artifacts/archipel-3d-gameplay.png"});
+ // v0.3: camera controls, touch-like drag, hide/show UI, return to overview.
+ const labelA=page.locator(".island-label").nth(1);
+ const posA0=await labelA.boundingBox();
+ await page.locator("#zoom-in").click();
+ await page.waitForTimeout(300);
+ const posA1=await labelA.boundingBox();
+ assert.ok(posA0&&posA1&&Math.abs(posA0.x-posA1.x)+Math.abs(posA0.y-posA1.y)>1,"zoom button changes world projection");
+ await page.locator("#zoom-out").click();
+ await page.locator("#recenter").click();
+ const canvasRect=await page.locator("#world").boundingBox();
+ const beforeDrag=await labelA.boundingBox();
+ await page.mouse.move(canvasRect.x+canvasRect.width*.50,canvasRect.y+canvasRect.height*.49);
+ await page.mouse.down();
+ await page.mouse.move(canvasRect.x+canvasRect.width*.66,canvasRect.y+canvasRect.height*.54,{steps:7});
+ await page.mouse.up();
+ await page.waitForTimeout(200);
+ const afterDrag=await labelA.boundingBox();
+ assert.ok(beforeDrag&&afterDrag&&Math.abs(beforeDrag.x-afterDrag.x)+Math.abs(beforeDrag.y-afterDrag.y)>5,"camera drag pans archipelago");
+ await page.locator("#recenter").click();
+ await page.locator("#toggle-actions").click();
+ assert.ok(await page.locator("body").evaluate(n=>n.classList.contains("dock-closed")),"action panel collapses");
+ await page.locator("#toggle-actions").click();
+ assert.ok(!(await page.locator("body").evaluate(n=>n.classList.contains("dock-closed"))),"action panel reopens");
+ await page.locator("#view-only").click();
+ assert.ok(await page.locator("body").evaluate(n=>n.classList.contains("map-only")),"map-only mode enabled");
+ assert.ok(await page.locator("#restore-ui").isVisible(),"restore menu stays visible");
+ await page.screenshot({path:"artifacts/archipel-v03-map-only.png"});
+ await page.locator("#restore-ui").click();
+ assert.ok(!(await page.locator("body").evaluate(n=>n.classList.contains("map-only"))),"full UI restored");
+ console.log("PASS: zoom buttons, pan drag, recenter, action dock and map-only restoration");
  assert.deepEqual(errors,[],"No uncaught JavaScript errors");
  console.log("PASS: touch a pair of 3D islands, draft, HUD, 10 resource markers, no JS errors");
 }finally{await browser?.close();server.kill("SIGTERM")}
