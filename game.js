@@ -9,13 +9,13 @@ export const ISLANDS=[
   ["Iskaria","arch"],["Ondélys","mist"]
 ];
 // Natural placement: Poisson-disc inspired sampling in an oval archipelago.
-const FALLBACK=[[-4.5,-6.4],[.1,-7.4],[4.6,-5.8],[-2.5,-3.3],[3.3,-2.0],[-4.6,.1],[.1,1.0],[4.7,2.2],[-2.8,5.4],[2.5,7.1]];
+const FALLBACK=[[-3.5,-10.1],[.7,-11.1],[3.7,-7.2],[-2.3,-5.3],[2.5,-3.0],[-3.8,-.3],[1.4,1.5],[3.4,5.0],[-2.5,8.0],[1.4,11.4]];
 export function makePositions(rng=Math.random){
  const points=[];
  for(let tries=0;tries<5000&&points.length<10;tries++){
   const a=rng()*Math.PI*2,r=Math.sqrt(rng());
-  const x=Math.cos(a)*r*5.85,z=Math.sin(a)*r*7.65;
-  if(points.every(p=>Math.hypot(p[0]-x,p[1]-z)>=3.25))points.push([x,z]);
+  const x=Math.cos(a)*r*4.55,z=Math.sin(a)*r*11.50;
+  if(points.every(p=>Math.hypot(p[0]-x,p[1]-z)>=3.35))points.push([x,z]);
  }
  // On the very rare failed sample, use an irregular seeded formation.
  if(points.length<10)return FALLBACK.map(p=>[p[0]+(rng()-.5)*.8,p[1]+(rng()-.5)*.8]);
