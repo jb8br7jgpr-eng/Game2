@@ -156,6 +156,24 @@ const loss=attack(a3,target,(()=>{const rolls=[0,.9999];return()=>rolls.shift()}
 assert.equal(loss.win,false);assert.equal(p3.ship,2);assert.equal(p3.boat,a3.players[a3.current].boat);
 const a4=begin();a4.players.forEach(p=>p.turns=22);a4.players[a4.current].turns=21;
 assert.equal(finishTurn(a4).type,"end");assert.equal(a4.stage,"ended");
+// Regression: the dice winner claims the island in their own faction colour,
+// independently of whether violet or amber wins the toss.
+for(const expectedWinner of [0,1]){
+ const start=newGame(rng(230+expectedWinner));
+ const values=expectedWinner===0?[.95,.05]:[.05,.95];
+ const event=rollForStart(start,()=>values.shift());
+ assert.equal(event.winner,expectedWinner);
+ const first=chooseStart(start,0);
+ assert.equal(first.player,expectedWinner);
+ assert.equal(start.islands[0].owner,expectedWinner,"first drafted island owner equals first chooser");
+ assert.equal(start.chooser,1-expectedWinner);
+ const second=chooseStart(start,1);
+ assert.equal(start.islands[1].owner,1-expectedWinner,"second drafted island belongs to other captain");
+ assert.equal(start.current,1-expectedWinner,"second chooser moves first");
+ assert.equal(second.player,start.current,"start event reports the actual acting player");
+ start.players[0].name="Lunaria";start.players[1].name="Solaria";
+ assert.equal(start.players[start.islands[0].owner].name,expectedWinner===0?"Lunaria":"Solaria");
+}
 const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
 const css=fs.readFileSync(new URL("../styles.css",import.meta.url),"utf8");
 const board=fs.readFileSync(new URL("../board3d.js",import.meta.url),"utf8");
