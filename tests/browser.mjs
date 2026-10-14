@@ -89,6 +89,29 @@ try{
  assert.ok(!await page.locator("body").evaluate(x=>x.classList.contains("map-only")),"UI restored");
  await page.screenshot({path:"artifacts/archipel-3d-gameplay.png"});
  console.log("PASS: camera zoom, recenter, pan, collapsible dock and map-only restoration");
+ // v0.5 tactical confirmation: cancel is safe, accepting actually rolls.
+ const target=await page.evaluate(()=>{
+  const T=window.__ARCHIPEL_TEST,s=T.getState(),from=s.players[s.current].boat;
+  const edge=s.edges.find(e=>e.includes(from));const id=edge[0]===from?edge[1]:edge[0];
+  s.islands[id].owner=1-s.current;
+  T.refresh();T.showAttackPreview(id);
+  return id;
+ });
+ await page.locator(".attack-forecast").waitFor({timeout:6000});
+ assert.ok(await page.locator(".forecast-teams").isVisible(),"attack sides and bonuses visible");
+ const forecastText=await page.locator(".attack-forecast").innerText();
+ assert.ok(forecastText.includes("Force possible")&&forecastText.includes("sur 36"),"odds and dice force ranges visible");
+ const untouched=await page.evaluate(()=>JSON.stringify(window.__ARCHIPEL_TEST.getState()));
+ await page.getByRole("button",{name:"Annuler"}).click();
+ const cancelled=await page.evaluate(()=>JSON.stringify(window.__ARCHIPEL_TEST.getState()));
+ assert.equal(cancelled,untouched,"cancel does not touch state nor spend action");
+ await page.evaluate(id=>window.__ARCHIPEL_TEST.showAttackPreview(id),target);
+ await page.getByRole("button",{name:/Attaquer !/}).click();
+ await page.locator(".dice-settled").waitFor({timeout:18000});
+ assert.ok(await page.locator(".battle-scores").isVisible(),"actual battle dice and result presented");
+ const spent=await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().actionUsed);
+ assert.equal(spent,true,"confirmed attack consumes exactly one action");
+ console.log("PASS: attack preview, accurate forces, cancel without mutation, confirmed dice combat");
  assert.deepEqual(errors,[],"No uncaught JavaScript errors");
  console.log("PASS: touch a pair of 3D islands, draft, HUD, 10 resource markers, no JS errors");
 }finally{await browser?.close();server.kill("SIGTERM")}
