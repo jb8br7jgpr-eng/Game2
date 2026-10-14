@@ -18,6 +18,8 @@ jobs:
       - run: npx playwright install chromium --with-deps
       - name: Tester le plateau 3D sur une fenêtre iPhone
         run: node tests/browser.mjs
+      - name: Tester le mode en ligne sur deux iPhone simulés
+        run: node tests/online-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
