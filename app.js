@@ -2,12 +2,12 @@ import {
  FACTIONS,newGame,connected,owned,score,rollForStart,chooseStart,
  beginTurn,canNavigate,canAttack,previewAttack,navigate,colonize,previewColonization,upgradeShip,upgradeIsland,
  attack,refugeOptions,retreat,finishTurn
-} from "./game.js?v=20261014-07";
-import {Board3D} from "./board3d.js?v=20261014-07";
+} from "./game.js?v=20261014-08";
+import {Board3D} from "./board3d.js?v=20261014-08";
 import {animateDice} from "./dice-v04.js";
 const $=id=>document.getElementById(id);
 let state=newGame(),locked=false;
-const ICONS={Vélyra:"☾",Auréon:"☀"};
+const FACTION_SIGNS=["☾","☀"];
 const alertBox=$("toast");
 const dialog=$("dialog"),dialogTitle=$("dialog-title"),dialogText=$("dialog-text"),
  dialogIcon=$("dialog-icon"),dialogButtons=$("dialog-buttons"),dialogSpecial=$("dialog-special");
@@ -28,7 +28,7 @@ function modal({icon="🏝️",title,text,buttons=[],special=""}){
 }
 const player=()=>state.players[state.current];
 const currentIsland=()=>state.islands[player()?.boat];
-const name=i=>FACTIONS[i]?.name||"";
+const name=i=>state.players[i]?.name||FACTIONS[i]?.name||"";
 const panelText={
  roll:"Un lancer de dés décide qui choisit son île en premier.",
  draft:"Touchez l'île sur laquelle votre faction souhaite commencer.",
@@ -58,6 +58,7 @@ function updateHud(){
  state.players.forEach((p,i)=>{
   const node=$("team-"+i),active=(stage==="play"&&state.current===i)||(stage==="retreat"&&1-state.current===i)||(stage==="draft"&&state.chooser===i);
   node.classList.toggle("active",active);node.classList.toggle("orange",i===1);
+  node.querySelector(".team-title").textContent=p.name;
   node.querySelector(".team-count").textContent=owned(state,i).length+" îles • "+score(state,i)+" pts";
   node.querySelector(".team-ship").textContent="⛵ "+p.ship+"  ⚔ "+p.wins;
   node.querySelector(".team-wood").textContent=p.wood;
@@ -98,9 +99,38 @@ function updateHud(){
 function escapeHTML(s){return s.replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
 function refresh(){board.sync(state);updateHud()}
 function reset(){
- state=newGame();locked=false;board.rebuild(state);refresh();
- modal({icon:"🏝️",title:"Bienvenue dans ARCHIPEL",text:"Deux factions rivales, dix îles et une mer pleine de surprises. Pince pour zoomer, glisse pour explorer, ou masque l’interface pour admirer ton archipel.",buttons:[{label:"Découvrir l'archipel",click:()=>{}}]});
+ const previous=state?.players?.map(p=>p.name)||FACTIONS.map(f=>f.name);
+ state=newGame();locked=false;
+ state.players.forEach((p,i)=>{p.name=previous[i]||FACTIONS[i].name});
+ for(let i=0;i<2;i++)$("player-name-"+i).value=state.players[i].name;
+ dialog.classList.remove("active");
+ $("welcome").hidden=false;
+ document.body.classList.add("in-lobby");
+ mapOnly(false);
+ board.rebuild(state);refresh();
 }
+function beginAdventure(e){
+ e.preventDefault();
+ if(locked)return;
+ const inputs=[0,1].map(i=>$("player-name-"+i));
+ inputs.forEach(input=>input.setCustomValidity(""));
+ const names=inputs.map(input=>input.value.trim().replace(/\s+/g," "));
+ if(names.some(n=>!n)){
+  const invalid=names.findIndex(n=>!n);
+  inputs[invalid].setCustomValidity("Choisis un nom pour cette faction.");
+  inputs[invalid].reportValidity();return;
+ }
+ if(names[0].toLocaleLowerCase("fr")===names[1].toLocaleLowerCase("fr")){
+  inputs[1].setCustomValidity("Les deux factions doivent avoir des noms différents.");
+  inputs[1].reportValidity();return;
+ }
+ state.players.forEach((p,i)=>{p.name=names[i]});
+ $("welcome").hidden=true;
+ document.body.classList.remove("in-lobby");
+ board.centerView();refresh();
+ toast("⚔️ "+name(0)+" contre "+name(1)+" — que l'aventure commence !");
+}
+
 function pickStartingIsland(id){
  if(state.stage!=="draft"||locked)return;
  try{
@@ -112,7 +142,7 @@ function pickStartingIsland(id){
    board.centerView();
    toast("🏝️ "+name(event.player)+" prend "+tile.name+". À "+name(event.next)+" !");
   }else{
-   board.viewIsland(state.players[state.current].boat,1.12);
+   board.viewPlayer(state.current,1.12);
    modal({icon:"⛵",title:"Que la conquête commence !",
     text:name(event.player)+" joue en premier pour compenser son second choix d'île.",
     buttons:[{label:"Jouer",click:()=>{}}]});
@@ -183,7 +213,7 @@ async function doRoll(){
   const event=rollForStart(state);refresh();
   modal({icon:"🎲",title:"Le destin des marées",text:"Deux dés miniatures vont déterminer qui choisit sa première île.",special:'<div id="dice-stage"></div>',buttons:[]});
   await animateDice($("dice-stage"),event.dice,[0,1]);
-  dialogText.textContent="Vélyra : "+event.dice[0]+" • Auréon : "+event.dice[1]+". "+name(event.winner)+" choisit en premier. L'autre faction jouera en premier.";
+  dialogText.textContent=name(0)+" (violet) : "+event.dice[0]+" • "+name(1)+" (orange) : "+event.dice[1]+". "+name(event.winner)+" choisit en premier. L'autre faction jouera en premier.";
   revealDiceButton("Choisir son île",()=>{});
  }catch(e){toast(e.message)}finally{locked=false}
 }
@@ -374,6 +404,7 @@ async function doRetreat(id){
   const move=retreat(state,id);
   board.showRetreatOptions([]);
   await board.sail(move.player,move.to,1050);
+  board.viewPlayer(state.current,1.12);
   refresh();
   toast("⛵ "+name(move.player)+" se réfugie sur "+state.islands[id].name);
  }catch(ex){toast(ex.message)}
@@ -382,6 +413,7 @@ async function doRetreat(id){
 function nextTurn(){
  try{
   const e=finishTurn(state);refresh();
+  if(e.type!=="end")board.viewPlayer(state.current,1.12);
   if(e.type==="end"){showEnding();return}
   const p=player();
   modal({icon:e.player===0?"☾":"☀",title:"À "+p.name+" de jouer !",
@@ -393,7 +425,7 @@ function showEnding(){
  if(state.stage!=="ended")return;
  const w=state.winner,txt=w===null?"Les factions sont à égalité.":name(w)+" devient maître de l'archipel !";
  modal({icon:w===null?"🤝":"👑",title:w===null?"Match nul !":"Victoire de "+name(w)+" !",
-  text:txt+" Vélyra : "+score(state,0)+" points et "+owned(state,0).length+" îles. Auréon : "+score(state,1)+" points et "+owned(state,1).length+" îles.",
+  text:txt+" "+name(0)+" : "+score(state,0)+" points et "+owned(state,0).length+" îles. "+name(1)+" : "+score(state,1)+" points et "+owned(state,1).length+" îles.",
   special:'<div class="ending-crest">✦ ⚜ ✦</div>',
   buttons:[{label:"Nouvelle aventure",click:reset}]});
 }
@@ -412,6 +444,10 @@ function mapOnly(value){
  document.body.classList.toggle("map-only",value);
  $("view-only").setAttribute("aria-pressed",String(value));
  $("restore-ui").setAttribute("aria-hidden",String(!value));
+}
+$("welcome-form").addEventListener("submit",beginAdventure);
+for(const input of [$("player-name-0"),$("player-name-1")]){
+ input.addEventListener("input",()=>input.setCustomValidity(""));
 }
 $("toggle-actions").addEventListener("click",hideOrShowActions);
 $("view-only").addEventListener("click",()=>mapOnly(true));
@@ -432,7 +468,7 @@ try{
  board=new Board3D($("world"),onIsland);reset();
  // Development-only browser hooks: never exposed on the deployed github.io host.
  if(location.hostname==="127.0.0.1"||location.hostname==="localhost"){
-  window.__ARCHIPEL_TEST={getState:()=>state,refresh,showAttackPreview,showColonizationPreview,doColonize,pickRefuge,confirmRetreat,doRetreat,getBoard:()=>board,openIslandPicker,pickStartingIsland};
+  window.__ARCHIPEL_TEST={getState:()=>state,refresh,reset,beginAdventure,showAttackPreview,showColonizationPreview,doColonize,pickRefuge,confirmRetreat,doRetreat,getBoard:()=>board,openIslandPicker,pickStartingIsland};
  }
 }catch(ex){
  console.error("Erreur de rendu 3D",ex);
