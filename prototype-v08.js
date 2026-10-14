@@ -1,5 +1,6 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 import {buildDiorama} from "./prototype-v08-models.js";
+import {GLTFLoader} from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js";
 const canvas=document.querySelector("#scene");
 const $=id=>document.getElementById(id);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -55,6 +56,32 @@ const fs=[
 " gl_FragColor=vec4(clamp(ocean*uSun,0.,1.),alpha);",
 "}"
 ].join("\n");
+async function loadHeroAssets(){
+ const loader=new GLTFLoader();
+ const fetchAsset=path=>new Promise((resolve,reject)=>{
+  loader.load(path,gltf=>resolve(gltf.scene),undefined,reject);
+ });
+ const [island,boat]=await Promise.all([
+  fetchAsset("./assets/hero-island-v081.glb"),
+  fetchAsset("./assets/hero-ship-v081.glb")
+ ]);
+ island.position.set(1,0,0);
+ boat.position.set(-5.35,.18,2.75);boat.rotation.y=.14;
+ island.traverse(node=>{if(node.isMesh){
+  node.castShadow=true;node.receiveShadow=true;
+  if(node.material){node.material.side=THREE.DoubleSide;node.material.needsUpdate=true;}
+ }});
+ boat.traverse(node=>{if(node.isMesh){
+  node.castShadow=true;node.receiveShadow=true;
+  if(node.material){node.material.side=THREE.DoubleSide;node.material.needsUpdate=true;}
+ }});
+ scene.add(island,boat);
+ const seabed=new THREE.Mesh(new THREE.PlaneGeometry(240,240),
+  new THREE.MeshStandardMaterial({color:0x2b8188,roughness:1}));
+ seabed.rotation.x=-Math.PI/2;seabed.position.y=-.92;
+ seabed.receiveShadow=false;scene.add(seabed);
+ return {island,boat,quality:"GLB-PBR"};
+}
 function makeWater(){
  const g=new THREE.PlaneGeometry(240,240,100,100);g.rotateX(-Math.PI/2);
  const m=new THREE.ShaderMaterial({uniforms:{uTime:{value:0},uSun:{value:1}},vertexShader:vs,fragmentShader:fs,
@@ -158,7 +185,7 @@ function frame(timestamp){
  }
  renderer.render(scene,camera);
 }
-function init(){
+async function init(){
  try{
   scene=new THREE.Scene();scene.background=new THREE.Color(0x90d2e5);scene.fog=new THREE.FogExp2(0x7ed3df,.0035);
   camera=new THREE.PerspectiveCamera(33,1,.1,500);
@@ -174,7 +201,14 @@ function init(){
   sun.shadow.camera.top=15;sun.shadow.camera.bottom=-15;
   sun.shadow.bias=-.0002;sun.shadow.normalBias=.02;scene.add(sun);
   scene.add(new THREE.AmbientLight(0xfff4d1,.28));
-  visuals=buildDiorama(scene);water=makeWater();
+  try{
+    visuals=await loadHeroAssets();
+   }catch(assetError){
+    console.warn("GLB assets could not be loaded; using fallback art",assetError);
+    visuals=buildDiorama(scene);visuals.quality="fallback";
+    $("helper").textContent="Modèles haute définition indisponibles · affichage de secours";
+   }
+  water=makeWater();
   setCamera();resize();bind();
   $("loading").hidden=true;
   requestAnimationFrame(frame);
@@ -186,5 +220,5 @@ function init(){
 init();
 if(location.hostname==="localhost"||location.hostname==="127.0.0.1"){
  window.__ARCHIPEL08_TEST={getScene:()=>scene,getCamera:()=>camera,getWater:()=>water,
-  getBoat:()=>visuals?.boat,getControls:()=>state,getRenderer:()=>renderer};
+  getBoat:()=>visuals?.boat,getVisuals:()=>visuals,getControls:()=>state,getRenderer:()=>renderer};
 }
