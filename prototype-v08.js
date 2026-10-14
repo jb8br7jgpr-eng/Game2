@@ -7,7 +7,7 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const V=(x,y,z)=>new THREE.Vector3(x,y,z);
 let scene,renderer,camera,visuals,water;
 let sun,hemi,elapsed=0,last=0;
-const state={yaw:.40,pitch:.58,distance:innerWidth<700?39:31,center:V(innerWidth<700?-2.5:-1,.5,.3),fingers:new Map(),sailing:null,evening:false};
+const state={yaw:.40,pitch:.58,distance:innerWidth<700?36:31,center:V(innerWidth<700?-1.5:-1,innerWidth<700?-1.15:.5,.3),fingers:new Map(),sailing:null,evening:false};
 const wake=[];
 const vs=[
 "precision highp float;",
@@ -35,8 +35,10 @@ const fs=[
 " vec2 p=vWorld;",
 " vec2 q=p-vec2(1.,0.);",
 " float d=length(q);",
-" float shallow=1.-smoothstep(3.3,9.5,d);",
-" float pool=1.-smoothstep(3.3,6.5,d);",
+" float bearing=atan(q.y,q.x);",
+" float irregular=.16*sin(bearing*5.1)+.10*sin(bearing*11.8);",
+" float shallow=1.-smoothstep(3.3,10.8,d+irregular);",
+" float pool=1.-smoothstep(3.3,7.4,d+irregular);",
 " float swell=sin(p.x*.77+uTime*.59)*sin(p.y*.74-uTime*.54);",
 " float fine=sin(p.x*7.1+uTime*1.2+sin(p.y*2.3))*sin(p.y*5.8-uTime*1.08);",
 " float ribbons=sin(p.x*5.3+sin(p.y*3.7+uTime*.66))+sin(p.y*5.1-sin(p.x*4.3-uTime*.74));",
@@ -48,10 +50,10 @@ const fs=[
 " vec3 lightDirection=normalize(vec3(-.36,1.,.5));",
 " float glitter=pow(max(0.,dot(reflect(-lightDirection,normalize(vNormal)),normalize(vec3(.06,.82,.45)))),15.);",
 " ocean+=vec3(.31,.35,.26)*glitter*(.13+.14*abs(fine))*uSun;",
-" float foam=exp(-pow((d-3.48-.045*sin(uTime*1.8+atan(q.y,q.x)*8.))/.23,2.));",
+" float foam=exp(-pow((d+irregular-3.48-.055*sin(uTime*1.8+bearing*9.))/.23,2.));",
 " foam*=.66+.22*sin(atan(q.y,q.x)*16.+uTime*1.8)+.10*fine;",
 " ocean=mix(ocean,vec3(.95,1.,.97),clamp(foam*.83,0.,.9));",
-" float alpha=mix(.97,.61,shallow);",
+" float alpha=mix(.97,.56,shallow);",
 " alpha=mix(alpha,.97,clamp(foam,0.,1.));",
 " gl_FragColor=vec4(clamp(ocean*uSun,0.,1.),alpha);",
 "}"
@@ -77,7 +79,27 @@ async function loadHeroAssets(){
  }});
  scene.add(island,boat);
  const seabed=new THREE.Mesh(new THREE.PlaneGeometry(240,240),
-  new THREE.MeshStandardMaterial({color:0x2b8188,roughness:1}));
+  new THREE.ShaderMaterial({
+   vertexShader:`varying vec2 vCoord;
+     void main(){vec4 w=modelMatrix*vec4(position,1.);vCoord=w.xz;
+       gl_Position=projectionMatrix*viewMatrix*w;}`,
+   fragmentShader:`precision mediump float;
+     varying vec2 vCoord;
+     void main(){
+       vec2 p=vCoord-vec2(1.,0.);
+       float a=atan(p.y,p.x);
+       float r=length(p);
+       float natural=r+.21*sin(a*5.1)+.12*sin(a*11.8);
+       float nearSand=1.-smoothstep(3.2,11.5,natural);
+       float grains=sin(vCoord.x*8.1+sin(vCoord.y*3.9))*sin(vCoord.y*7.7);
+       vec3 sandy=vec3(.65,.62,.42)+vec3(.055,.05,.018)*grains;
+       vec3 seafloor=vec3(.075,.26,.31);
+       vec3 c=mix(seafloor,sandy,nearSand);
+       c+=vec3(.022,.055,.052)*sin(vCoord.x*2.1+vCoord.y*.9)*nearSand;
+       gl_FragColor=vec4(c,1.0);
+     }`,
+   depthWrite:true
+  }));
  seabed.rotation.x=-Math.PI/2;seabed.position.y=-.92;
  seabed.receiveShadow=false;scene.add(seabed);
  return {island,boat,quality:"GLB-PBR"};
@@ -96,7 +118,7 @@ function setCamera(){
 }
 function resize(){
  const w=canvas.clientWidth||innerWidth,h=canvas.clientHeight||innerHeight;
- camera.aspect=w/h;camera.updateProjectionMatrix();
+ camera.aspect=w/h;camera.fov=w/h<.72?49:36;camera.updateProjectionMatrix();
  renderer.setSize(w,h,false);
 }
 function zoom(factor){state.distance=clamp(state.distance*factor,13,48);setCamera()}
@@ -151,7 +173,7 @@ function bind(){
  $("zoom-plus").addEventListener("click",()=>zoom(.84));
  $("zoom-minus").addEventListener("click",()=>zoom(1.17));
  $("camera-reset").addEventListener("click",()=>{
-  state.yaw=.4;state.pitch=.58;state.distance=innerWidth<700?39:31;state.center.set(innerWidth<700?-2.5:-1,.5,.3);setCamera();
+  state.yaw=.4;state.pitch=.58;state.distance=innerWidth<700?36:31;state.center.set(innerWidth<700?-1.5:-1,innerWidth<700?-1.15:.5,.3);setCamera();
  });
  $("sail").addEventListener("click",sail);
  $("light").addEventListener("click",switchLighting);
