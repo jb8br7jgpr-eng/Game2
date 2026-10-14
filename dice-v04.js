@@ -7,21 +7,24 @@ const slots=[["front",1],["back",6],["right",3],["left",4],["top",2],["bottom",5
 const endFace={
  1:[0,0],2:[-90,0],3:[0,-90],4:[0,90],5:[90,0],6:[0,180]
 };
-function createCube(value,faction){
+function createCube(value,faction,label){
  const parent=document.createElement("div");
  parent.className="die-world "+(faction===0?"die-v":"die-a");
  parent.setAttribute("aria-label","Dé à six faces, résultat "+value);
  parent.innerHTML='<div class="die-object">'+slots.map(([side,n])=>
   '<div class="die-face '+side+'" aria-hidden="true">'+
   Array.from({length:9},(_,i)=>'<i class="pip'+(layout[n].includes(i)?" filled":"")+'"></i>').join("")+
-  '</div>').join("")+'</div><span class="die-player">'+(faction===0?"VÉLYRA":"AURÉON")+'</span>';
+  '</div>').join("")+'</div><span class="die-player"></span>';
+ parent.querySelector(".die-player").textContent=label;
  return parent;
 }
-export async function animateDice(container,values,factions=[0,1]){
+export async function animateDice(container,values,factions=[0,1],factionNames=["Vélyra","Auréon"]){
  container.replaceChildren();
  container.classList.add("dice-3d-stage");
  const cubes=values.map((n,i)=>{
-  const parent=createCube(n,factions[i]??i);
+  const faction=factions[i]??i;
+  // Always resolve a die's visible name by its faction index (0 purple, 1 amber).
+  const parent=createCube(n,faction,factionNames[faction]??(faction===0?"Vélyra":"Auréon"));
   container.appendChild(parent);
   return parent.querySelector(".die-object");
  });
