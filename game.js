@@ -1,4 +1,5 @@
-import {generatePositions,generateSeaLanes} from "./map-v05.js";
+import {generatePositions} from "./map-v06.js";
+import {generateSeaLanes} from "./map-v05.js";
 // ARCHIPEL 0.2 — deterministic rule engine, independent from rendering.
 export const FACTIONS=[
   {name:"Vélyra",short:"V",color:0x8655cf,light:"#b59cf6",flag:"#8250c5"},
