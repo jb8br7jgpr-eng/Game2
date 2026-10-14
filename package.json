@@ -1,1 +1,7 @@
-{"private":true,"type":"module","scripts":{"test":"node --check game.js && node --check board3d.js && node --check app.js && node tests/smoke.mjs"}}
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --check game.js && node --check board3d.js && node --check art-v03.js && node --check app.js && node tests/smoke.mjs"
+  }
+}
