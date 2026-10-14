@@ -1,6 +1,7 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 import {connected} from "./game.js?v=20261014-07";
 import {islandMiniature,shipMiniature} from "./art-v06.js";
+import {finishIsland,finishShip} from "./art-v07.js";
 import {dockPosition} from "./docks-v06.js";
 
 // Procedural 3D toy models: real geometry, rounded silhouettes, soft sunlight.
@@ -12,10 +13,11 @@ const mesh=(geometry,material,x=0,y=0,z=0,cast=true)=>{
 };
 function island3D(tile){
  const group=islandMiniature(tile,THREE);
+ finishIsland(group,tile,THREE);
  group.position.set(tile.x,.03,tile.z);
  return group;
 }
-function ship3D(player,level){return shipMiniature(player,level,THREE);}
+function ship3D(player,level){const group=shipMiniature(player,level,THREE);finishShip(group,player,level,THREE);return group;}
 export class Board3D{
  constructor(canvas,onIsland){
   this.canvas=canvas;this.onIsland=onIsland;this.scene=new THREE.Scene();
@@ -50,6 +52,8 @@ export class Board3D{
       "float slow=sin(p.x*.48+p.y*.3+time*.35)*.5+.5;",
       "float broad=sin(p.y*.91-p.x*.36-time*.40)*.5+.5;",
       "float ripple=waves(p*1.06);",
+      "float micro=sin(p.x*5.4+time*1.2+sin(p.y*2.1))*sin(p.y*6.1-time*.83);",
+      "float drifts=sin(p.y*.28+time*.20)*sin(p.x*.43-time*.13);",
       "float caustic=pow(max(0.,sin(p.x*3.1+sin(p.y*2.6+time*.45))-sin(p.y*2.8-time*.73)),3.);",
       "float shallows=0.;float surf=0.;",
       "for(int i=0;i<10;i++){",
@@ -63,10 +67,12 @@ export class Board3D{
       "vec3 turquoise=vec3(.15,.81,.77);",
       "vec3 color=mix(deep,mediumSea,.38+slow*.25+broad*.17);",
       "color=mix(color,turquoise,shallows*.78);",
-      "color+=vec3(.026,.066,.057)*caustic*(.07+.16*shallows);",
+      "color+=vec3(.036,.076,.074)*caustic*(.09+.21*shallows);",
+      "color+=vec3(.013,.040,.035)*(micro*.5+.5)*(.17+.30*shallows);",
+      "color+=vec3(.02,.042,.046)*drifts;",
       "float highlights=pow(max(0.,sin(p.x*4.8+p.y*3.2+time*.86)),15.)*(.055+.052*ripple);",
       "color+=vec3(.22,.30,.26)*highlights;",
-      "color=mix(color,vec3(.91,1.,.94),clamp(surf*.52,0.,.65));",
+      "color=mix(color,vec3(.91,1.,.94),clamp(surf*.56,0.,.67));",
       "gl_FragColor=vec4(clamp(color,0.,1.),1.);",
       "}"
     ].join("\n")
@@ -274,6 +280,36 @@ export class Board3D{
   if(ids.length===1)this.scale=Math.max(1.18,this.scale);
   else if(ids.length<=3)this.scale=Math.max(.62,this.scale);
   this.resize();
+ }
+ async upgradeEffect(id,kind="town"){
+  const tile=this.currentGame.islands[id];if(!tile)return;
+  const cx=kind==="ship"?this.boatTarget(this.currentGame.current,id):v(tile.x,0,tile.z);
+  const hue=kind==="ship"?0xc5dcff:0xffdf97;
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.1,.06,8,40),
+   new THREE.MeshBasicMaterial({color:hue,transparent:true,opacity:.72,depthWrite:false}));
+  ring.rotation.x=-Math.PI/2;ring.position.set(cx.x,.29,cx.z);this.scene.add(ring);
+  const strips=new THREE.Group();strips.position.set(cx.x,.1,cx.z);this.scene.add(strips);
+  const material=new THREE.MeshBasicMaterial({color:hue,transparent:true,opacity:.78,depthWrite:false});
+  for(let n=0;n<12;n++){
+   const a=n*Math.PI*2/12;
+   const piece=new THREE.Mesh(new THREE.BoxGeometry(.07,.6,.07),material);
+   piece.position.set(Math.cos(a)*.76,.60,Math.sin(a)*.76);piece.rotation.y=a;strips.add(piece);
+  }
+  const start=performance.now();
+  await new Promise(done=>{
+   const frame=now=>{
+    const t=Math.min(1,(now-start)/820);
+    ring.scale.setScalar(.40+t*1.34);
+    ring.material.opacity=.70*(1-t);
+    strips.scale.y=.3+Math.sin(t*Math.PI)*1.6;
+    strips.rotation.y=t*Math.PI*1.3;
+    material.opacity=.75*(1-t);
+    if(t<1)requestAnimationFrame(frame);else done();
+   };requestAnimationFrame(frame);
+  });
+  this.scene.remove(ring,strips);ring.geometry.dispose();ring.material.dispose();
+  strips.children.forEach(m=>m.geometry.dispose());material.dispose();
+  this.spark(cx.x,cx.z,hue);
  }
  async expeditionEffect(id,success){
   const tile=this.currentGame?.islands[id];if(!tile)return;
