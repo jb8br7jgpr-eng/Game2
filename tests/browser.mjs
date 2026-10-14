@@ -44,7 +44,35 @@ try{
  const current=await page.locator("#stage-name").innerText();
  assert.ok(current.startsWith("À "),"correct turn displayed");
  assert.equal(await page.locator(".island-label").count(),10);
+ 
+ // V0.3 usability: camera zoom + reset, pannable map, collapsible dock, full map.
+ const marker=page.locator(".island-label").nth(4);
+ const initial=await marker.boundingBox();
+ await page.getByRole("button",{name:"Zoom avant"}).click();
+ const closer=await marker.boundingBox();
+ assert.ok(Math.abs(closer.x-initial.x)>1||Math.abs(closer.y-initial.y)>1,"zoom reprojects island labels");
+ await page.getByRole("button",{name:"Recentrer la carte"}).click();
+ const centered=await marker.boundingBox();
+ assert.ok(Math.abs(centered.x-initial.x)<2&&Math.abs(centered.y-initial.y)<2,"recenter restores camera view");
+ const canvas=page.locator("#world");
+ await page.mouse.move(225,440);await page.mouse.down();
+ await page.mouse.move(270,465,{steps:8});await page.mouse.up();
+ const dragged=await marker.boundingBox();
+ assert.ok(Math.abs(dragged.x-centered.x)>3||Math.abs(dragged.y-centered.y)>3,"one-finger drag pans camera");
+ await page.getByRole("button",{name:"Recentrer la carte"}).click();
+ await page.getByRole("button",{name:"Masquer le menu d’actions"}).click();
+ assert.ok(await page.locator("body").evaluate(x=>x.classList.contains("dock-closed")),"dock closed");
+ await page.getByRole("button",{name:"Afficher le menu d’actions"}).click();
+ assert.ok(!await page.locator("body").evaluate(x=>x.classList.contains("dock-closed")),"dock reopened");
+ await page.getByRole("button",{name:"Masquer l’interface"}).click();
+ assert.ok(await page.locator("body").evaluate(x=>x.classList.contains("map-only")),"map-only mode");
+ assert.ok(await page.getByRole("button",{name:"Réafficher l’interface"}).isVisible(),"restore interface present");
+ await page.screenshot({path:"artifacts/archipel-map-only.png"});
+ await page.getByRole("button",{name:"Réafficher l’interface"}).click();
+ assert.ok(!await page.locator("body").evaluate(x=>x.classList.contains("map-only")),"UI restored");
  await page.screenshot({path:"artifacts/archipel-3d-gameplay.png"});
+ console.log("PASS: interactive camera zoom, recenter, drag/pan, collapsible dock and map-only restoration");
+
  // v0.3: camera controls, touch-like drag, hide/show UI, return to overview.
  const labelA=page.locator(".island-label").nth(1);
  const posA0=await labelA.boundingBox();
