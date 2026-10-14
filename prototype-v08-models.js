@@ -288,7 +288,7 @@ export function buildDiorama(scene){
   rock.castShadow=false;
  }
  const boat=createBoat(mats);
- boat.position.set(-4.55,.18,2.1);boat.rotation.y=.14;scene.add(boat);
+ boat.position.set(-5.35,.18,2.75);boat.rotation.y=.14;scene.add(boat);
  const shoreLight=new THREE.Group();scene.add(shoreLight);
  const seabed=new THREE.Mesh(new THREE.PlaneGeometry(200,200),
   new THREE.MeshStandardMaterial({color:0x227d83,roughness:1}));
