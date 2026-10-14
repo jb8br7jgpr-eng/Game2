@@ -206,6 +206,64 @@ def bent_palm(asset,x,z,height,sway):
     for i in range(3):
         asset.sphere("wood",top+[.07*(i-1),-.12,.045],(.09,.10,.083),1)
 
+def boulder(asset,x,y,z,size,seed,moss=False):
+    # Irregular, fractured and slightly asymmetric cliffs, no perfect sphere silhouettes.
+    rng=np.random.default_rng(seed)
+    rock=trimesh.creation.icosphere(subdivisions=1,radius=1)
+    vertices=np.asarray(rock.vertices,dtype=np.float64).copy()
+    vertices*=rng.uniform(.83,1.17,size=(len(vertices),1))
+    vertices*=np.array([1.1,.82,.88])*size
+    rot=trimesh.transformations.rotation_matrix(rng.uniform(-.5,.5),[.4,1,.2])
+    rock.vertices=vertices
+    rock.apply_transform(rot)
+    rock.apply_translation((x,y,z))
+    asset.add(rock,"rock_dark" if seed%5==0 else "stone")
+    if moss:
+        asset.sphere("moss",(x,y+size*.73,z),(.64*size,.095*size,.52*size),1)
+def rolled_rope(asset,x,y,z,radius=.17,turns=2):
+    for turn in range(turns):
+        r=radius-(turn/(turns+1))*radius*.30
+        samples=16
+        for n in range(samples):
+            a=n*2*PI/samples;b=(n+1)*2*PI/samples
+            p=(x+math.cos(a)*r,y+.013*turn,z+math.sin(a)*r)
+            q=(x+math.cos(b)*r,y+.013*turn,z+math.sin(b)*r)
+            asset.beam("rope",p,q,.018,5)
+def beach_details(asset):
+    rng=random.Random(910)
+    # Small shell clusters and driftwood remain on beach, away from the front stairs.
+    for i in range(23):
+        a=i*2.399963+.33
+        r=2.71+(i%6)*.13
+        x=r*math.cos(a);z=r*math.sin(a)
+        if -.05<x<1.28 and z>1.1:continue
+        h=.47-(r-2.50)*.18
+        asset.sphere("shell",(x,h+.015,z),(.07,.025,.047),1)
+        if i%4==0:
+            asset.sphere("coral",(x+.075,h+.016,z-.06),(.05,.024,.044),1)
+    for x,z,a in [(2.51,1.06,.6),(-1.98,2.34,-.4),(-2.8,-1.19,.14)]:
+        p=(x,.37,z);q=(x+math.cos(a)*.60,.39,z+math.sin(a)*.60)
+        asset.beam("wood_dark",p,q,.053,7)
+    # Sculpted sea stars with five small arms, one distinctive hero detail.
+    for x,z in [(2.08,2.08),(-1.25,3.02)]:
+        asset.sphere("coral",(x,.46,z),(.061,.03,.055),1)
+        for j in range(5):
+            a=j*2*PI/5
+            asset.beam("coral",(x,.47,z),
+                (x+math.cos(a)*.13,.45,z+math.sin(a)*.13),.022,5)
+def coastal_rocks(asset):
+    # Dense rock stack on the sheltered side only; do not invade the house or pier.
+    seeds=[(-2.54,-.90,.39),(-2.93,-1.20,.58),(-3.03,-.70,.46),
+           (-2.45,-1.58,.48),(2.64,-1.37,.48),(2.95,-1.03,.38),
+           (3.10,-.37,.30),(-2.81,.50,.35)]
+    for i,(x,z,r) in enumerate(seeds):
+        boulder(asset,x,.39+r*.37,z,r,710+i,moss=i%3==0)
+    for j in range(32):
+        a=j*2.399963
+        r=2.62+(j%5)*.17
+        x=r*math.cos(a);z=r*math.sin(a)
+        if z>1.48 and x<-.70:continue
+        boulder(asset,x,.42,z,.12+(j%5)*.057,900+j,moss=j%8==0)
 def hut(asset):
     # Rebuilt pitched roof as real roof slabs, not overlapping flat boxes.
     x=.40;z=-.80
@@ -268,13 +326,8 @@ def build_island():
     cliff(a)
     # Removed the circular underwater sand disc: continuous seabed shader
     # now supplies the shallow sandy gradient, without a visible hard edge.
-    # Rock masses at coastline; individual faceted geometry with textured normals.
-    for j in range(27):
-        angle=j*2.399963;radius=2.65+(j%4)*.22
-        x=math.cos(angle)*radius;z=math.sin(angle)*radius
-        if z>1.55 and x<-.70:continue
-        size=.13+(j%5)*.066
-        a.sphere("stone",(x,.43,z),(size*1.3,size,size*.89),1)
+    coastal_rocks(a)
+    beach_details(a)
     # Four palm silhouettes, correctly planted in grass outside the house.
     for palm in [(-1.9,-1.40,2.17,-.37),(-.62,-2.05,2.30,-.24),(2.19,-1.25,2.0,.39),(2.28,.47,1.85,.32)]:
         bent_palm(a,*palm)
