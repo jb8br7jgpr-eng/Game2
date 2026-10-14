@@ -226,10 +226,10 @@ export class Board3D{
       "vec3 turquoise=vec3(.15,.81,.77);",
       "vec3 color=mix(deep,mediumSea,.38+slow*.25+broad*.17);",
       "color=mix(color,turquoise,shallows*.78);",
-      "color+=vec3(.055,.11,.09)*caustic*(.17+.40*shallows);",
-      "float highlights=pow(max(0.,sin(p.x*4.8+p.y*3.2+time*.86)),13.)*(.16+.13*ripple);",
+      "color+=vec3(.026,.066,.057)*caustic*(.07+.16*shallows);",
+      "float highlights=pow(max(0.,sin(p.x*4.8+p.y*3.2+time*.86)),15.)*(.055+.052*ripple);",
       "color+=vec3(.22,.30,.26)*highlights;",
-      "color=mix(color,vec3(.91,1.,.94),clamp(surf*.8,0.,.82));",
+      "color=mix(color,vec3(.91,1.,.94),clamp(surf*.52,0.,.65));",
       "gl_FragColor=vec4(clamp(color,0.,1.),1.);",
       "}"
     ].join("\n")
@@ -239,7 +239,7 @@ export class Board3D{
   this.islandRoot=new THREE.Group();this.scene.add(this.islandRoot);
   this.boatRoot=new THREE.Group();this.scene.add(this.boatRoot);
   this.outline=new THREE.Group();this.scene.add(this.outline);
-  this.currentGame=null;this.tweens=[];this.dragged=false;this.scale=.73;
+  this.currentGame=null;this.tweens=[];this.dragged=false;this.scale=.80;
   this.center=new THREE.Vector3(0,0,0);this.pointers=new Map();this.pinchDistance=0;this.lastTap=0;
   this.wakes=[];this.wakeClock=0;
   this.wakeGeometry=new THREE.SphereGeometry(.095,8,5);
@@ -283,7 +283,7 @@ export class Board3D{
  }
  updateCamera(){
   this.center.x=THREE.MathUtils.clamp(this.center.x,-6.5,6.5);
-  this.center.z=THREE.MathUtils.clamp(this.center.z,-8.5,8.5);
+  this.center.z=THREE.MathUtils.clamp(this.center.z,-12.8,12.8);
   this.camera.position.set(this.center.x,23,this.center.z+27);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   this.canvas.dataset.cameraCenter=this.center.x.toFixed(3)+","+this.center.z.toFixed(3);
@@ -433,7 +433,7 @@ export class Board3D{
   if(marks.instanceColor)marks.instanceColor.needsUpdate=true;
   marks.frustumCulled=false;marks.castShadow=false;
   this.routeMarks=marks;this.routeGroup.add(marks);
-  this.boatModels=[0,1].map(i=>{const p=game.players[i];const g=ship3D(i,p.ship);const loc=p.boat===null?{x:0,z:0}:game.islands[p.boat];g.position.set(loc.x+.8,.32,loc.z+.65);g.visible=p.boat!==null;this.boatRoot.add(g);return{group:g,level:p.ship,player:i}});
+  this.boatModels=[0,1].map(i=>{const p=game.players[i];const g=ship3D(i,p.ship);const loc=p.boat===null?{x:0,z:0}:game.islands[p.boat];g.position.set(loc.x+1.32,.32,loc.z+.89);g.visible=p.boat!==null;this.boatRoot.add(g);return{group:g,level:p.ship,player:i}});
   this.focus(game.selected??-1,game);
  }
  sync(game){
@@ -476,7 +476,7 @@ export class Board3D{
 
  async sail(player,to,duration=950){
   const group=this.boatModels[player]?.group;if(!group)return;
-  const t=this.currentGame.islands[to],end=v(t.x+.8,.32,t.z+.65);
+  const t=this.currentGame.islands[to],end=v(t.x+1.32,.32,t.z+.89);
   return this.tweenBoat(group,end,duration);
  }
  tweenBoat(group,end,duration=1180){
@@ -495,11 +495,11 @@ export class Board3D{
  }
  async battleMotion(event){
   const g=this.boatModels[event.attacker].group,target=this.currentGame.islands[event.to],start=g.position.clone();
-  const mid=v(start.x+(target.x+.8-start.x)*.67,.32,start.z+(target.z+.65-start.z)*.67);
+  const mid=v(start.x+(target.x+1.32-start.x)*.67,.32,start.z+(target.z+.89-start.z)*.67);
   await this.tweenBoat(g,mid,670);
   this.spark(target.x+.35,target.z+.45,event.win?0xffe1a2:0xffa58e);
   await new Promise(r=>setTimeout(r,350));
-  if(event.win)await this.tweenBoat(g,v(target.x+.8,.32,target.z+.65),470);
+  if(event.win)await this.tweenBoat(g,v(target.x+1.32,.32,target.z+.89),470);
   else await this.tweenBoat(g,start,570);
  }
  spark(x,z,color=0xffe6ac){
