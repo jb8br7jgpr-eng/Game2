@@ -12,10 +12,14 @@ try{
  browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-webgl"]});
  const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
  const errors=[];
- page.on("pageerror",e=>errors.push(e.message));
+ page.on("pageerror",e=>{errors.push(e.message);console.error("PAGE ERROR:",e.stack||e.message)});
+ page.on("requestfailed",r=>console.error("REQUEST FAILED:",r.url(),r.failure()?.errorText));
  page.on("console",m=>{if(m.type()==="error")console.error("Browser:",m.text())});
  await page.goto("http://127.0.0.1:"+port,{waitUntil:"domcontentloaded",timeout:30000});
- await page.locator("#dialog.active").waitFor({timeout:45000});
+ await page.waitForTimeout(6000);
+ console.log("INITIAL STATE",JSON.stringify(await page.evaluate(()=>({url:location.href,html:document.getElementById("actions")?.innerText,modal:document.getElementById("dialog")?.className,fallback:document.getElementById("fallback")?.innerText}))));
+ mkdirSync("artifacts",{recursive:true});await page.screenshot({path:"artifacts/archipel-debug.png"});
+ await page.locator("#dialog.active").waitFor({timeout:12000});
  assert.ok(await page.locator("#world").isVisible(),"WebGL canvas visible");
  const gl=await page.evaluate(()=>!!document.querySelector("canvas")?.getContext("webgl2"));
  assert.ok(gl,"WebGL2 available");
