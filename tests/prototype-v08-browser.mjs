@@ -49,7 +49,7 @@ try{
  assert.ok(z2<z1,"zoom plus affects real 3D camera");
  await page.locator("#camera-reset").click();
  const z3=await page.evaluate(()=>window.__ARCHIPEL08_TEST.getControls().distance);
- assert.equal(z3,31,"recenter returns camera to authored reference");
+ assert.equal(z3,39,"iPhone recenter restores framing for whole island and skiff");
  const duskBefore=await page.evaluate(()=>window.__ARCHIPEL08_TEST.getControls().evening);
  await page.locator("#light").click();
  assert.equal(await page.evaluate(()=>window.__ARCHIPEL08_TEST.getControls().evening),!duskBefore);
