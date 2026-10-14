@@ -40,6 +40,8 @@ try{
  await page.locator(".dice-settled").waitFor({timeout:8000});
  const cubes=await page.locator(".die-object").count();
  assert.equal(cubes,2,"real animated 3D dice rendered for first pick");
+ assert.deepEqual(await page.locator("#dice-stage .die-player").allTextContents(),
+  ["Lunaria","Solaria"],"starting dice show configured names in purple/orange order");
  await page.getByRole("button",{name:/Choisir son île/}).click();
  // V0.6: wide irregular archipelago needs reliable, accessible island selection.
  await page.getByRole("button",{name:/Voir les 10 îles/}).click();
@@ -143,6 +145,12 @@ try{
  await page.getByRole("button",{name:/Attaquer !/}).click();
  await page.locator(".dice-settled").waitFor({timeout:18000});
  assert.ok(await page.locator(".battle-scores").isVisible(),"actual battle dice and result presented");
+ const combatants=await page.evaluate(()=>{
+   const s=window.__ARCHIPEL_TEST.getState();
+   return [s.players[s.current].name,s.players[1-s.current].name];
+ });
+ assert.deepEqual(await page.locator("#dice-stage .die-player").allTextContents(),
+  combatants,"battle dice labels follow attacker and defender, including reversed faction order");
  const spent=await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().actionUsed);
  assert.equal(spent,true,"confirmed attack consumes exactly one action");
  console.log("PASS: attack preview, accurate forces, cancel without mutation, confirmed dice combat");
@@ -174,6 +182,11 @@ try{
  });
  await page.evaluate(()=>window.__ARCHIPEL_TEST.doColonize());
  await page.getByRole("heading",{name:/Expédition repoussée/}).waitFor({timeout:25000});
+ const expeditionName=await page.evaluate(()=>{
+  const s=window.__ARCHIPEL_TEST.getState();return s.players[s.current].name;
+ });
+ assert.deepEqual(await page.locator("#dice-stage .die-player").allTextContents(),
+  [expeditionName],"single expedition die shows its actual captain name");
  assert.equal(await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().actionUsed),true);
  assert.ok(await page.evaluate(()=>{
   const s=window.__ARCHIPEL_TEST.getState();return s.islands[s.players[s.current].boat].owner===null;
