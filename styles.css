@@ -168,3 +168,87 @@ body.map-only .vignette{background:linear-gradient(180deg,#04324d32,transparent 
 @media(prefers-reduced-motion:reduce){
  .bottom-area .control-panel,.camera-btn,.island-label{transition:none!important}
 }
+
+
+/* ——— ARCHIPEL 0.4 · faction-led HUD, clear steps and tangible 3D dice ——— */
+body{--faction:#2698a5;--faction-shadow:#196a80;--faction-light:#e9f9f8;--faction-border:#b0d4d3}
+body[data-faction="velyra"]{--faction:#8054bd;--faction-shadow:#533286;--faction-light:#f0eafd;--faction-border:#cbb7ee}
+body[data-faction="aureon"]{--faction:#d8823d;--faction-shadow:#a4592a;--faction-light:#fff1e0;--faction-border:#eac394}
+.control-panel{
+ background:linear-gradient(165deg,#fffdf8fa 0%,var(--faction-light) 100%);
+ border:2px solid var(--faction-border);box-shadow:0 5px 0 var(--faction-shadow),0 12px 32px #00385077;
+ border-radius:21px;padding:10px 12px 12px;
+}
+.stage-caption{color:var(--faction);font-size:9px;letter-spacing:.12em}
+.stage-name{color:var(--faction-shadow);font-size:18px}
+.panel-head{padding:5px 3px 7px;gap:10px;border-bottom:1px solid #adbaaf47}
+.panel-head>div:first-child{min-width:0;flex:1}
+#island-detail{max-width:48%;min-width:103px;display:flex;flex-direction:column;align-items:flex-end;gap:4px;
+ border-left:1px solid #d4c4a66b;padding-left:9px}
+#island-detail .tile-name{font-size:14px;line-height:1.02}
+#island-detail .tile-owner{font-size:10px;line-height:1.2}
+#island-detail .tile-income{font-size:11px;background:#f9f6e8;border:1px solid #e3d9b7;padding:4px 7px;border-radius:9px}
+.panel-guide{font-size:11px;color:#5c7379;min-height:0;margin:8px 3px}
+.turn-steps{display:flex;align-items:center;padding:4px 3px 5px;gap:5px}
+.turn-step{display:flex;align-items:center;gap:5px;flex:1;min-width:0;opacity:.49;transition:opacity .18s}
+.turn-step.active{opacity:1}.turn-step.complete{opacity:.79}
+.turn-index{height:25px;width:25px;flex-shrink:0;border:1.5px solid #c6d4d0;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:1000;color:#799095;background:#f7f7eb}
+.turn-step.active .turn-index{background:var(--faction);border-color:var(--faction);color:white;box-shadow:0 0 0 3px var(--faction-light)}
+.turn-step.complete .turn-index{background:#5eae85;color:#fff;border-color:#5eae85}
+.turn-step>span:last-child{font-weight:950;font-size:10px;white-space:nowrap;color:#36505b;line-height:1.14}
+.turn-step small{display:block;font-weight:700;opacity:.73;font-size:8px;letter-spacing:-.035em;margin-top:2px}
+.step-connector{height:2px;flex:0 0 9px;border-radius:3px;background:#c6d5d1}
+.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:9px;row-gap:9px}
+.action{font-size:12px;min-height:47px;white-space:normal;line-height:1.1;padding:9px 7px}
+.action small{white-space:nowrap}
+.action.hero{background:linear-gradient(180deg,color-mix(in srgb,var(--faction),white 18%),var(--faction));
+ border-color:var(--faction-border);box-shadow:0 3px 0 var(--faction-shadow);text-shadow:none}
+.action.outline{grid-column:1/-1;background:linear-gradient(#fffdf7,#f8efdf);font-size:12px;min-height:39px}
+.action.danger{background:linear-gradient(#edab86,#d8794b)}
+.action.violet{background:linear-gradient(#a582da,#7656b3)}
+.team.active{border-color:var(--faction);box-shadow:0 4px 0 var(--faction-shadow),0 8px 18px #003b5c67}
+.team:not(.active){opacity:.88;filter:saturate(.75)}
+.team-heading{font-size:13px}
+.team-count{color:#284655}
+.team-line{font-size:11px}
+.camera-controls{top:48%}
+.camera-btn.center{color:var(--faction)}
+.island-label{background:linear-gradient(175deg,#fffbf0f1,#f1efdbec);border-color:#dfc99b}
+.island-label b{font-family:ui-rounded,"Avenir Next",system-ui,sans-serif;font-size:11px;font-weight:1000;letter-spacing:0}
+.island-label.active{border:2px solid var(--faction);filter:drop-shadow(0 0 7px #fff4cc)}
+.dock-handle{color:var(--faction-shadow);border-color:var(--faction-border);box-shadow:0 3px 0 var(--faction-shadow)}
+.dialog-card{background:linear-gradient(170deg,#fffbef 8%,var(--faction-light) 100%)}
+.dialog-title{color:var(--faction-shadow)}
+.dialog-button:not(.alt){background:linear-gradient(180deg,color-mix(in srgb,var(--faction),white 18%),var(--faction));border-color:var(--faction-border);box-shadow:0 4px 0 var(--faction-shadow)}
+.battle-scores{display:grid;gap:5px;margin-top:13px;font-size:13px;font-weight:900;color:#38596d}
+.battle-scores span{border-radius:12px;background:#f3eee1;padding:8px}
+.battle-scores b{font-size:17px;color:var(--faction-shadow)}
+
+/* True CSS 3D cube: six faces, pip layouts from 1 through 6, solid shadows and bounce. */
+.dice-3d-stage{margin:6px auto 15px;display:flex;justify-content:center;align-items:center;gap:16px;min-height:132px;perspective:660px}
+.die-world{display:flex;flex-direction:column;align-items:center;justify-content:center;width:88px;gap:18px;perspective:550px}
+.die-object{width:68px;height:68px;position:relative;transform-style:preserve-3d;will-change:transform}
+.die-face{position:absolute;inset:0;background:linear-gradient(135deg,#fffefd,#f3e8d9);
+ border:2px solid #ddc5a4;border-radius:12px;display:grid;grid-template-columns:repeat(3,1fr);
+ grid-template-rows:repeat(3,1fr);padding:10px;gap:2px;
+ backface-visibility:hidden;box-shadow:inset 0 1px 6px #ffffffd1,0 0 2px #927954}
+.die-v .die-face{border-color:#ba9fe0}.die-a .die-face{border-color:#f2b77d}
+.die-face.front{transform:translateZ(34px)}.die-face.back{transform:rotateY(180deg) translateZ(34px)}
+.die-face.right{transform:rotateY(90deg) translateZ(34px)}.die-face.left{transform:rotateY(-90deg) translateZ(34px)}
+.die-face.top{transform:rotateX(90deg) translateZ(34px)}.die-face.bottom{transform:rotateX(-90deg) translateZ(34px)}
+.pip{width:10px;height:10px;border-radius:50%;margin:auto;background:transparent}
+.die-v .pip.filled{background:radial-gradient(circle at 30% 25%,#ae8bde,#6b439c);box-shadow:inset 1px 2px 2px #50357b}
+.die-a .pip.filled{background:radial-gradient(circle at 30% 25%,#ffc27d,#c77528);box-shadow:inset 1px 2px 2px #8e561e}
+.die-player{font-size:10px;font-weight:1000;letter-spacing:.07em;color:#726382}
+.die-a .die-player{color:#b2682b}
+.die-duel{font-size:14px;font-weight:1000;color:#957f63}
+.dice-settled .die-world{animation:die-land .4s ease-out}
+@keyframes die-land{0%{transform:translateY(-13px)}55%{transform:translateY(5px)}100%{transform:translateY(0)}}
+@media(max-width:390px){
+ .turn-step>span:last-child{font-size:9px}.turn-step small{font-size:7px}
+ .turn-index{width:22px;height:22px}.step-connector{flex-basis:5px}
+ .control-panel{padding:8px 9px 10px}.panel-guide{font-size:10px;margin:6px 2px}
+ .actions{gap:7px}.action{min-height:43px;font-size:11px}
+}
+@media(max-height:700px){.turn-steps{padding:1px 2px}.turn-step small{display:none}.panel-head{padding:2px 0}.panel-guide{margin:4px 2px}}
+@media(prefers-reduced-motion:reduce){.dice-settled .die-world{animation:none}}
