@@ -1,12 +1,21 @@
 # ARCHIPEL — Les royaumes des marées 🏝️
 
-**Prototype 3D interactif 0.6** du jeu de plateau miniature imaginé ensemble.
+**Prototype 3D interactif 0.7** du jeu de plateau miniature imaginé ensemble.
 
 ## Jouer
 
 **https://jb8br7jgpr-eng.github.io/Game2/**
 
 Deux joueurs jouent à tour de rôle sur **le même appareil**. Le jeu fonctionne sur un navigateur moderne compatible WebGL 2, avec connexion nécessaire pour charger Three.js depuis le CDN.
+
+### ARCHIPEL 0.7 — expéditions, retraites tactiles, miniatures soignées
+
+- **Retraite interactive** : après la défaite du défenseur, les îles de refuge accessibles sont illuminées en 3D et leurs étiquettes deviennent cliquables ; une confirmation précède le repli animé. Les refuges respectent les règles historiques (îles alliées, ou neutres si aucune possession).
+- **Colonisation au dé** : chaque île neutre affiche dès le début une difficulté fixe de **3, 4 ou 5**. Pour la coloniser, le navire lance un dé 3D et ajoute son bonus de niveau (**0, +1 ou +2**). Il faut atteindre ou dépasser la difficulté. Une expédition ratée consomme l'action, mais le bateau reste sur l'île et peut réessayer au prochain tour.
+- **Prévisualisation** : difficulté, niveau du bateau, plage de résultats, nombre de faces gagnantes sur six, pourcentage et conséquences de l'échec avant de lancer l'expédition.
+- **Nouvelle finition graphique** : détails de plage, végétation, fanions, mobilier du village, gréements de bateaux et reflets supplémentaires sur l'eau, sans superposition des bâtiments principaux.
+- **Animations enrichies** : cercle lumineux de l'expédition réussie ou ratée, animation d'amélioration des bateaux et constructions, retraite cartographique et effets maritimes conservés.
+- Les **dés 3D existants ne sont pas remplacés**. Aucune mécanique de comptoir commercial, reconnaissance ou port amélioré n'a été introduite dans cette version.
 
 ### ARCHIPEL 0.6 — dioramas unifiés, archipels uniques et trésor spectaculaire
 
