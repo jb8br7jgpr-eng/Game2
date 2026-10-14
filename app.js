@@ -61,11 +61,11 @@ function updateHud(){
  }
  if(stage==="retreat"){stageName.textContent="Retraite !";caption.textContent="Choisis un refuge pour le défenseur.";guide.textContent="Le navire ne perd aucun niveau."}
  if(stage==="ended"){stageName.textContent=state.winner===null?"Match nul":name(state.winner)+" remporte la partie";caption.textContent="L'archipel attend une revanche.";guide.textContent="Partie terminée."}
- const tile=state.selected===null?null:state.islands[state.selected];
- $("island-detail").classList.toggle("empty",!tile);
- $("island-detail").innerHTML=tile?
-  '<div class="tile-name">'+escapeHTML(tile.name)+'</div><span class="tile-owner">'+(tile.owner===null?"Île neutre":name(tile.owner))+(tile.owner===null?"":" · "+["Village","Ville","Ville fortifiée"][tile.level])+'</span><span class="tile-income">🌲 +'+tile.wood+' &nbsp; 🪨 +'+tile.stone+'</span>'
-  :'<span class="tile-name">L’archipel</span><span class="tile-owner">10 îles à explorer</span>';
+ const tileInfo=state.selected===null?null:state.islands[state.selected];
+ $("island-detail").classList.toggle("empty",!tileInfo);
+ $("island-detail").innerHTML=tileInfo?
+  '<div class="tileInfo-name">'+escapeHTML(tileInfo.name)+'</div><span class="tileInfo-owner">'+(tileInfo.owner===null?"Île neutre":name(tileInfo.owner))+(tileInfo.owner===null?"":" · "+["Village","Ville","Ville fortifiée"][tileInfo.level])+'</span><span class="tileInfo-income">🌲 +'+tileInfo.wood+' &nbsp; 🪨 +'+tileInfo.stone+'</span>'
+  :'<span class="tileInfo-name">L’archipel</span><span class="tileInfo-owner">10 îles à explorer</span>';
  const actions=$("actions");actions.replaceChildren();
  if(stage==="roll"){actions.appendChild(button("🎲 &nbsp; Lancer les dés",doRoll,true,"hero"));return}
  if(stage==="draft"){actions.appendChild(button("🏝️ &nbsp; Choisir une île",()=>toast("Touchez directement une île libre sur la carte."),true,"soft"));return}
