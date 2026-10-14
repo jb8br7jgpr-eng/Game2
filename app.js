@@ -51,6 +51,7 @@ function updateHud(){
   node.querySelector(".team-stone").textContent=p.stone;
  });
  const caption=$("status-line"),stageName=$("stage-name"),guide=$("guide");
+ guide.style.display=stage==="play"||stage==="retreat"||stage==="ended"?"none":"";
  if(stage==="roll"){stageName.textContent="Le choix des îles";caption.textContent="Deux royaumes. Un archipel.";guide.textContent="Lancez les dés pour commencer."}
  if(stage==="draft"){stageName.textContent=name(state.chooser)+" choisit son île";caption.textContent="Touchez une île libre.";guide.textContent="Les ressources sont visibles pour chaque île."}
  if(stage==="play"){
@@ -158,7 +159,7 @@ async function playBattle(id){
   const footer=result.win?"L'île est conquise, et ses fortifications perdent un niveau.":"Défaite : le bateau bat en retraite et perd un niveau. Une égalité favorise le défenseur.";
   modal({icon:result.win?"⚔️":"🛡️",title:result.win?"L'île est conquise !":"Attaque repoussée !",
    text:footer,
-   special:'<div class="dice-row"><div class="dice-result"><div class="die purple spin">'+result.attackerDice+'</div><div class="dice-score">'+result.attackerDice+' + '+(a-result.attackerDice)+' = <b>'+a+'</b></div></div><span class="dice-vs">VS</span><div class="dice-result"><div class="die amber spin">'+result.defenderDice+'</div><div class="dice-score">'+result.defenderDice+' + '+(d-result.defenderDice)+' = <b>'+d+'</b></div></div></div>',
+   special:'<div class="dice-row"><div class="dice-result"><div class="die '+(result.attacker===0?"purple":"amber")+' spin">'+result.attackerDice+'</div><div class="dice-score">'+result.attackerDice+' + '+(a-result.attackerDice)+' = <b>'+a+'</b></div></div><span class="dice-vs">VS</span><div class="dice-result"><div class="die '+(result.defender===0?"purple":"amber")+' spin">'+result.defenderDice+'</div><div class="dice-score">'+result.defenderDice+' + '+(d-result.defenderDice)+' = <b>'+d+'</b></div></div></div>',
    buttons:[{label:result.win?"Continuer":"Reprendre la mer",click:()=>{
     if(result.domination)showEnding();
     else if(state.stage==="retreat")pickRefuge();
