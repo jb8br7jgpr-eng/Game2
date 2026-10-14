@@ -177,7 +177,7 @@ function pickRefuge(){
 async function doRetreat(id){
  if(locked)return;
  try{
-  const e=retreat(state,id);locked=true;refresh();
+  const e=retreat(state,id);locked=true;
   await board.sail(e.player,e.to,700);locked=false;refresh();toast("⛵ "+name(e.player)+" se réfugie sur "+state.islands[id].name);
  }catch(ex){locked=false;toast(ex.message)}
 }
