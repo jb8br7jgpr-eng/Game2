@@ -1,6 +1,7 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 import {FACTIONS,connected} from "./game.js?v=20261014-03";
 import {enhanceIsland,enhanceShip} from "./art-v03.js";
+import {organicFoundation,architectureDetail,shipDetail} from "./art-v04.js";
 
 // Procedural 3D toy models: real geometry, rounded silhouettes, soft sunlight.
 // No pre-rendered concept-art pasted onto flat images.
@@ -126,10 +127,7 @@ function themed(g,type,seed){
 }
 function island3D(tile){
  const g=new THREE.Group();g.userData.islandId=tile.id;
- cyl(g,M.rock,1.00,.83,.46,0,.18,0,11);
- cyl(g,M.sand,1.03,.96,.20,0,.48,0,11);
- cyl(g,tile.theme==="volcano"?M.grass:M.grassLight,.83,.87,.14,0,.61,0,11);
- const shore=cyl(g,M.foam,1.11,1.1,.022,0,.14,0,18);shore.castShadow=false;
+ organicFoundation(g,tile,THREE,M);
  // Every neutral island has a small miniature tropical landscape.
  // Keep the toy-sized scenery readable even before villages are founded.
  palm(g,-.57,-.43,1.08);
@@ -142,6 +140,7 @@ function island3D(tile){
   settlement.scale.setScalar(1.18);settlement.position.y=-.15;g.add(settlement);
  }
  enhanceIsland(g,tile,THREE,M);
+ architectureDetail(g,tile,THREE,M);
  // Invisible but genuinely 3D tap target, with tagged object.
  const pick=mesh(new THREE.CylinderGeometry(1.25,1.25,.65,18),
    new THREE.MeshBasicMaterial({visible:false}),0,.66,0,false);
@@ -176,6 +175,7 @@ function ship3D(player,level){
  }
  ball(g,M.gold,0,.22,-.65,.08,.09,.10);
  enhanceShip(g,player,level,THREE,M);
+ shipDetail(g,player,level,THREE,M);
  g.scale.setScalar(SIZE);g.userData.player=player;
  return g;
 }
@@ -185,7 +185,7 @@ export class Board3D{
   this.scene.background=new THREE.Color(0x6eced2);
   this.scene.fog=new THREE.Fog(0x7bd5d5,22,75);
   this.camera=new THREE.OrthographicCamera(-4,4,9,-9,.1,120);
-  this.camera.position.set(0,29,17);this.camera.lookAt(0,0,0);
+  this.camera.position.set(0,23,27);this.camera.lookAt(0,0,0);
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
   this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.45));
   this.renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -195,7 +195,7 @@ export class Board3D{
   this.scene.add(new THREE.HemisphereLight(0xd7ffff,0x81b3a5,1.45));
   const sun=new THREE.DirectionalLight(0xfff1ce,2.35);
   sun.position.set(-7,20,11);sun.castShadow=true;
-  sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-15;sun.shadow.camera.right=15;
+  sun.shadow.mapSize.set(768,768);sun.shadow.camera.left=-15;sun.shadow.camera.right=15;
   sun.shadow.camera.top=23;sun.shadow.camera.bottom=-23;sun.shadow.camera.near=.5;sun.shadow.camera.far=56;
   sun.shadow.bias=-.0001;this.scene.add(sun);
   // Ocean v0.3: animated lagoon caustics, glitter and surf around each island.
@@ -239,7 +239,7 @@ export class Board3D{
   this.islandRoot=new THREE.Group();this.scene.add(this.islandRoot);
   this.boatRoot=new THREE.Group();this.scene.add(this.boatRoot);
   this.outline=new THREE.Group();this.scene.add(this.outline);
-  this.currentGame=null;this.tweens=[];this.dragged=false;this.scale=.89;
+  this.currentGame=null;this.tweens=[];this.dragged=false;this.scale=.73;
   this.center=new THREE.Vector3(0,0,0);this.pointers=new Map();this.pinchDistance=0;this.lastTap=0;
   this.wakes=[];this.wakeClock=0;
   this.wakeGeometry=new THREE.SphereGeometry(.095,8,5);
@@ -261,7 +261,7 @@ export class Board3D{
  }
  resize(){
   const w=this.canvas.clientWidth||window.innerWidth,h=this.canvas.clientHeight||window.innerHeight;
-  const aspect=w/h,fullWidth=Math.max(8.65,aspect*17.6),halfW=fullWidth/2,halfH=halfW/aspect;
+  const aspect=w/h,fullWidth=Math.max(10.75,aspect*19.5),halfW=fullWidth/2,halfH=halfW/aspect;
   this.camera.left=-halfW;this.camera.right=halfW;this.camera.top=halfH;this.camera.bottom=-halfH;
   this.camera.zoom=this.scale;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h,false);
   this.canvas.dataset.cameraZoom=this.scale.toFixed(3);
@@ -284,13 +284,13 @@ export class Board3D{
  updateCamera(){
   this.center.x=THREE.MathUtils.clamp(this.center.x,-6.5,6.5);
   this.center.z=THREE.MathUtils.clamp(this.center.z,-8.5,8.5);
-  this.camera.position.set(this.center.x,29,this.center.z+17);
+  this.camera.position.set(this.center.x,23,this.center.z+27);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   this.canvas.dataset.cameraCenter=this.center.x.toFixed(3)+","+this.center.z.toFixed(3);
   this.positionMarkers();
  }
  centerView(){
-  this.center.set(0,0,0);this.scale=.89;
+  this.center.set(0,0,0);this.scale=.73;
   this.updateCamera();this.resize();
  }
  zoomBy(factor){
@@ -313,7 +313,7 @@ export class Board3D{
  }
  zoomAt(zoom,clientX,clientY){
   const before=this.groundAt(clientX,clientY);
-  this.scale=THREE.MathUtils.clamp(zoom,.68,3.3);
+  this.scale=THREE.MathUtils.clamp(zoom,.56,3.45);
   this.resize();
   const after=this.groundAt(clientX,clientY);
   if(before&&after){
@@ -397,14 +397,42 @@ export class Board3D{
   for(const g of this.boatRoot.children.slice())this.boatRoot.remove(g);
   for(const g of this.routeGroup.children.slice())this.routeGroup.remove(g);
   this.islandModels=game.islands.map(t=>{const group=island3D(t);this.islandRoot.add(group);return{group,key:t.owner+"/"+t.level}});
+  // One instanced dashed-route mesh keeps ~20 bright, readable shipping lanes cheap on mobile.
+  const segments=[];
+  this.routeIds=[];
   for(const [i,j] of game.edges){
    const a=game.islands[i],b=game.islands[j];
-   const from=v(a.x,.025,a.z),to=v(b.x,.025,b.z),distance=from.distanceTo(to);
-   const dir=to.clone().sub(from).normalize();
-   for(let step=.75;step<distance-.62;step+=.42){
-    const mark=ball(this.routeGroup,M.foam,from.x+dir.x*step,.006,from.z+dir.z*step,.095,.016,.105,6);mark.castShadow=false;
+   const start=new THREE.Vector3(a.x,.06,a.z),end=new THREE.Vector3(b.x,.06,b.z);
+   const direction=end.clone().sub(start),distance=direction.length();
+   const norm=direction.clone().normalize(),perp=new THREE.Vector3(-norm.z,0,norm.x);
+   const offset=Math.sin((i+2)*(j+3))*.16;
+   const sample=u=>start.clone().lerp(end,u).addScaledVector(perp,Math.sin(u*Math.PI)*offset);
+   const count=Math.max(4,Math.floor((distance-2)/.34));
+   for(let n=0;n<count;n++){
+    const u=.18+(.64*n/count),vU=Math.min(.82,u+.64/count*.48);
+    const one=sample(u),two=sample(vU);
+    if(one.distanceTo(two)<.04)continue;
+    segments.push({one,two,i,j});
    }
   }
+  const shape=new THREE.CylinderGeometry(.043,.043,1,6);
+  const material=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.77,depthWrite:false});
+  const marks=new THREE.InstancedMesh(shape,material,segments.length);
+  marks.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+  const dummy=new THREE.Object3D(),axis=new THREE.Vector3(0,1,0);
+  for(let n=0;n<segments.length;n++){
+   const seg=segments[n],delta=seg.two.clone().sub(seg.one);
+   dummy.position.copy(seg.one).add(seg.two).multiplyScalar(.5);
+   dummy.quaternion.setFromUnitVectors(axis,delta.clone().normalize());
+   dummy.scale.set(1,delta.length(),1);dummy.updateMatrix();
+   marks.setMatrixAt(n,dummy.matrix);
+   marks.setColorAt(n,new THREE.Color(0xcdeef0));
+   this.routeIds.push([seg.i,seg.j]);
+  }
+  marks.instanceMatrix.needsUpdate=true;
+  if(marks.instanceColor)marks.instanceColor.needsUpdate=true;
+  marks.frustumCulled=false;marks.castShadow=false;
+  this.routeMarks=marks;this.routeGroup.add(marks);
   this.boatModels=[0,1].map(i=>{const p=game.players[i];const g=ship3D(i,p.ship);const loc=p.boat===null?{x:0,z:0}:game.islands[p.boat];g.position.set(loc.x+.8,.32,loc.z+.65);g.visible=p.boat!==null;this.boatRoot.add(g);return{group:g,level:p.ship,player:i}});
   this.focus(game.selected??-1,game);
  }
@@ -413,14 +441,14 @@ export class Board3D{
   game.islands.forEach((t,i)=>{
    const key=t.owner+"/"+t.level;if(key!==this.islandModels[i].key){
     this.islandRoot.remove(this.islandModels[i].group);
-    const group=island3D(t);this.islandRoot.add(group);this.islandModels[i]={group,key};
+    const group=island3D(t);group.userData.popAge=.72;this.islandRoot.add(group);this.islandModels[i]={group,key};
    }
   });
   game.players.forEach((p,i)=>{
    const prev=this.boatModels[i];
    if(prev.level!==p.ship){
     const old=prev.group;this.boatRoot.remove(old);const g=ship3D(i,p.ship);g.position.copy(old.position);
-    this.boatRoot.add(g);this.boatModels[i]={group:g,level:p.ship,player:i};
+    this.boatRoot.add(g);g.userData.popAge=.65;g.userData.defaultScale=g.scale.x;this.boatModels[i]={group:g,level:p.ship,player:i};
    }
    const g=this.boatModels[i].group;g.visible=p.boat!==null;
    if(p.boat!==null&&!g.userData.inMotion){const t=game.islands[p.boat];g.position.x=t.x+.8;g.position.z=t.z+.65}
@@ -430,24 +458,39 @@ export class Board3D{
  focus(id,game){
   for(let i=0;i<this.islandModels.length;i++){
    const g=this.islandModels[i].group;
-   const reachable=game.stage==="play"&&!game.moveUsed&&!game.actionUsed&&game.players[game.current].boat!==null
-     &&connected(game,game.players[game.current].boat,i);
-   g.scale.setScalar(i===id?1.09:reachable?1.035:1);
+   const boat=game.current===null?null:game.players[game.current]?.boat;
+   const reachable=game.stage==="play"&&!game.moveUsed&&!game.actionUsed&&boat!==null&&connected(game,boat,i);
+   const scale=i===id?1.09:reachable?1.045:1;
+   g.userData.defaultScale=scale;
+   if(!g.userData.popAge)g.scale.setScalar(scale);
+  }
+  if(this.routeMarks&&this.routeIds){
+   const boat=game.current===null?null:game.players[game.current]?.boat;
+   this.routeIds.forEach(([a,b],index)=>{
+    const near=game.stage==="play"&&!game.moveUsed&&!game.actionUsed&&boat!==null&&(a===boat||b===boat);
+    this.routeMarks.setColorAt(index,new THREE.Color(near?0xffd68b:0xd1f2f5));
+   });
+   if(this.routeMarks.instanceColor)this.routeMarks.instanceColor.needsUpdate=true;
   }
  }
+
  async sail(player,to,duration=950){
   const group=this.boatModels[player]?.group;if(!group)return;
   const t=this.currentGame.islands[to],end=v(t.x+.8,.32,t.z+.65);
   return this.tweenBoat(group,end,duration);
  }
- tweenBoat(group,end,duration=950){
+ tweenBoat(group,end,duration=1180){
   return new Promise(resolve=>{
    const from=group.position.clone();
    const dx=end.x-from.x,dz=end.z-from.z;
    if(Math.hypot(dx,dz)<.01){resolve();return}
+   const perpendicular=new THREE.Vector3(-dz,0,dx).normalize();
+   const bulge=Math.min(.42,Math.hypot(dx,dz)*.06);
+   const mid=from.clone().lerp(end,.5).addScaledVector(perpendicular,bulge);
+   mid.y=.35;
+   const curve=new THREE.CatmullRomCurve3([from,mid,end],false,"centripetal");
    group.userData.inMotion=true;
-   const facing=Math.atan2(dx,dz);
-   this.tweens.push({group,from,end,duration,elapsed:0,resolve,heading:facing});
+   this.tweens.push({group,from,end,curve,duration,elapsed:0,resolve,heading:Math.atan2(-dx,-dz)});
   });
  }
  async battleMotion(event){
@@ -491,11 +534,28 @@ export class Board3D{
   this.water.uniforms.time.value=time;
   this.animateWake(dt);
   this.positionMarkers();
+  this.islandModels.forEach(item=>{
+   const g=item.group,age=g.userData.popAge;
+   if(age>0){
+    g.userData.popAge=Math.max(0,age-dt);
+    const phase=1-age/.72;
+    g.scale.setScalar((g.userData.defaultScale||1)*(1+.18*Math.sin(Math.PI*Math.max(0,phase))));
+   }
+  });
+  this.boatModels.forEach((b,i)=>{
+   if(b?.group?.userData.popAge>0){
+    const g=b.group,age=g.userData.popAge;g.userData.popAge=Math.max(0,age-dt);
+    g.scale.setScalar((g.userData.defaultScale||g.scale.x)*(1+.16*Math.sin(Math.PI*(1-age/.65))));
+   }
+  });
   this.boatModels.forEach((b,i)=>{if(!b)return;const g=b.group;if(!g.userData.inMotion)g.position.y=.35+Math.sin(time*2.5+i*2)*.026;g.rotation.z=Math.sin(time*1.7+i)*.029});
   for(const t of this.tweens.slice()){
    t.elapsed+=dt*1000;const u=Math.min(1,t.elapsed/t.duration),ease=u*u*(3-2*u);
-   t.group.position.lerpVectors(t.from,t.end,ease);t.group.position.y=.33+Math.sin(u*Math.PI)*.13;
-   t.group.rotation.y=t.heading*.18;
+   const location=t.curve.getPoint(ease),direction=t.curve.getTangent(ease);
+   t.group.position.copy(location);
+   t.group.position.y=.35+Math.sin(u*Math.PI)*.075;
+   t.group.rotation.y=Math.atan2(-direction.x,-direction.z);
+   t.group.rotation.z=Math.sin(u*Math.PI*5)*.065;
    this.wakeClock+=dt;
    if(this.wakeClock>.10){this.wakeClock=0;this.createWake(t.group.position.x,t.group.position.z)}
    if(u>=1){t.group.userData.inMotion=false;this.tweens.splice(this.tweens.indexOf(t),1);t.resolve()}
