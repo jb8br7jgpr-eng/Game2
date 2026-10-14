@@ -28,6 +28,9 @@ try{
  await page.screenshot({path:"artifacts/archipel-3d-mobile.png"});
  await page.getByRole("button",{name:/Découvrir l'archipel/}).click();
  await page.getByRole("button",{name:/Lancer les dés/}).click();
+ await page.locator(".dice-settled").waitFor({timeout:8000});
+ const cubes=await page.locator(".die-object").count();
+ assert.equal(cubes,2,"real animated 3D dice rendered for first pick");
  await page.getByRole("button",{name:/Choisir son île/}).click();
  async function tapIsland(i){
    const rect=await page.locator(".island-label").nth(i).boundingBox();
@@ -44,6 +47,8 @@ try{
  const current=await page.locator("#stage-name").innerText();
  assert.ok(current.startsWith("À "),"correct turn displayed");
  assert.equal(await page.locator(".island-label").count(),10);
+ assert.equal(await page.locator(".turn-step").count(),3,"three-step turn guidance");
+ assert.equal(await page.locator("body").getAttribute("data-faction")!==null,true,"active faction controls menu palette");
  
  // V0.3 camera and user-experience smoke tests use numeric camera state,
  // rather than label positions affected by Safari/WebGL frame scheduling.
@@ -56,7 +61,7 @@ try{
  const zoomedOut=Number(await canvas.getAttribute("data-camera-zoom"));
  assert.ok(zoomedOut<zoomed,"zoom-out changes camera zoom");
  await page.getByRole("button",{name:"Recentrer la carte"}).click();
- assert.ok(Math.abs(Number(await canvas.getAttribute("data-camera-zoom"))-.89)<.015,"recenter restores initial zoom");
+ assert.ok(Math.abs(Number(await canvas.getAttribute("data-camera-zoom"))-.73)<.015,"recenter restores initial zoom");
  const initialCenter=await canvas.getAttribute("data-camera-center");
  const canvasRect=await canvas.boundingBox();
  await page.mouse.move(canvasRect.x+canvasRect.width*.50,canvasRect.y+canvasRect.height*.49);
