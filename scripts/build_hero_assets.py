@@ -392,51 +392,115 @@ def build_island():
         a.sphere("stone",(r*math.cos(theta),-.58,r*math.sin(theta)),(.16,.11,.19),1)
     a.finish(OUT/"hero-island-v081.glb")
 def sail(asset):
+    # Tensioned billowing cloth with round edges and weathered seam lines.
     vertices=[];faces=[]
-    N=14
+    N=20
     for i in range(N+1):
         u=i/N
         for j in range(N+1):
             v=j/N
-            x=(u-.5)*.95
-            y=.81+v*1.21
-            z=-.15+.19*math.sin(u*PI)*math.sin(v*PI)
+            curve=.17*math.sin(u*PI)*math.sin(v*PI)
+            x=(u-.5)*.99+.03*math.sin(v*PI)
+            y=.81+v*1.23
+            z=-.15+curve
             vertices.append((x,y,z))
             if i<N and j<N:
                 o=i*(N+1)+j
                 faces.extend(((o,o+N+1,o+1),(o+N+1,o+N+2,o+1)))
     asset.mesh("linen",vertices,faces)
+    # Rope-finished hems, subtle seams and embroidered wave motif.
+    for side in (-1,1):
+        for j in range(N):
+            v1=j/N;v2=(j+1)/N
+            def corner(v):
+                return (side*.495+.03*math.sin(v*PI),.81+v*1.23,-.15+.010)
+            asset.beam("rope",corner(v1),corner(v2),.014,6)
+    for u in (.32,.66):
+        for j in range(9):
+            v=j/9;w=(j+1)/9
+            def stitch(t):
+                return ((u-.5)*.99+.03*math.sin(t*PI),.81+t*1.23,
+                        -.15+.17*math.sin(u*PI)*math.sin(t*PI)+.012)
+            asset.beam("rope",stitch(v),stitch(w),.006,5)
+    for j in range(13):
+        u=j/13;v=.22+.045*math.sin(u*2*PI)
+        w=(j+1)/13;vv=.22+.045*math.sin(w*2*PI)
+        def surf(uu,vv):
+            return ((uu-.5)*.99+.03*math.sin(vv*PI),.81+vv*1.23,
+                -.15+.17*math.sin(uu*PI)*math.sin(vv*PI)+.015)
+        asset.beam("accent",surf(u,v),surf(w,vv),.012,5)
+
 def hull(asset):
-    stations=[(-1.02,.07),(-.78,.33),(-.23,.49),(.40,.46),(.78,.31),(.99,.12)]
-    vertices=[];faces=[];N=16
+    stations=[(-1.15,.03),(-.99,.19),(-.74,.38),(-.29,.48),
+              (.24,.47),(.65,.38),(.88,.27),(1.04,.14),(1.13,.04)]
+    vertices=[];faces=[];N=22
     for z,w in stations:
         for j in range(N):
             ang=j*PI*2/N
-            vertices.append((math.sin(ang)*w,.27+math.cos(ang)*.225,z))
+            # Real flared cross section with round bilge and raised sheer.
+            height=.255+math.cos(ang)*(.22+.025*math.sin(z*PI))
+            vertices.append((math.sin(ang)*w,height,z))
     for i in range(len(stations)-1):
         for j in range(N):
             a,b,c,d=i*N+j,i*N+(j+1)%N,(i+1)*N+j,(i+1)*N+(j+1)%N
             faces.extend(((a,b,c),(b,d,c)))
     asset.mesh("wood",vertices,faces)
+    # Thin contrasting strakes follow the actual hull curvature on each flank.
+    for side in (-1,1):
+        for level in (.38,.53):
+            prev=None
+            for z,w in stations:
+                p=(side*w*.94,level-.035*abs(z),z)
+                if prev is not None:
+                    asset.beam("wood_dark" if level==.38 else "bronze",prev,p,
+                               .017 if level==.38 else .011,6)
+                prev=p
+    for z in (-.80,.01,.74):
+        for side in (-1,1):
+            asset.beam("wood_dark",(side*.39,.28,z),(side*.41,.47,z),.020,6)
 def build_ship():
     a=Asset();hull(a)
     a.sphere("wood",(0,.47,.05),(.38,.07,.69),2)
     for side in [-1,1]:
-        a.beam("wood",(side*.36,.48,-.67),(side*.36,.48,.70),.055)
-        a.beam("bronze",(side*.42,.54,-.60),(side*.42,.54,.58),.013)
+        a.beam("wood_dark",(side*.43,.51,-.70),(side*.43,.51,.76),.040)
+        a.beam("bronze",(side*.45,.545,-.63),(side*.45,.545,.58),.013)
+        for zz in [-.62,-.22,.20,.59]:
+            a.beam("wood",(side*.44,.48,zz),(side*.44,.63,zz),.020,6)
     a.beam("wood",(-.08,.52,-.15),(-.08,2.20,-.15),.058)
     a.beam("wood",(-.54,1.98,-.15),(.53,1.98,-.15),.034)
     a.beam("wood",(-.47,.75,-.15),(.48,.75,-.15),.029)
+    # Bow-sprit and distinctive high stern with carved wooden transom.
+    a.beam("wood_dark",(0,.43,-1.02),(0,.71,-1.45),.041,8)
+    a.sphere("bronze",(0,.72,-1.48),(.075,.06,.055),1)
+    a.box("wood_dark",(0,.52,.78),(.63,.21,.26))
+    a.box("bronze",(0,.65,.81),(.54,.045,.14))
+    for side in [-1,1]:
+        a.sphere("bronze",(side*.24,.56,.91),(.046,.038,.031),1)
     sail(a)
-    for end in [(-.33,.59,-.65),(.39,.61,.59)]:
-        a.beam("wood",(-.08,2.18,-.15),end,.016)
+    for end in [(-.40,.58,-.76),(.41,.58,.67)]:
+        a.beam("rope",(-.08,2.18,-.15),end,.015)
+    a.beam("rope",(-.08,2.18,-.15),(0,.63,-1.23),.014)
+    for z in [-.45,.10,.50]:
+        a.beam("wood_dark",(-.28,.52,z),(.30,.52,z),.020,6)
+    # A removable traveller and a tiny steering tiller.
+    a.beam("wood_dark",(0,.68,.56),(0,.75,1.05),.033)
+    a.sphere("bronze",(0,.78,1.04),(.057,.057,.055),1)
+    rolled_rope(a,-.16,.56,.39,.14,3)
     for z in [-.54,.35]:
         a.beam("wood",(.14,.49,z),(.14,.80,z),.055)
         a.sphere("bronze",(.14,.80,z),(.115,.055,.11),1)
     a.sphere("bronze",(-.31,.65,.64),(.080,.12,.085),1)
+    a.box("wood_dark",(-.17,.56,.61),(.19,.22,.25))
+    a.box("bronze",(-.17,.685,.61),(.20,.03,.26))
+    # A small anchor on the starboard side, with a cable to the bow.
+    a.beam("iron",(.49,.41,-.55),(.55,.18,-.65),.026,6)
+    a.beam("iron",(.40,.23,-.67),(.70,.23,-.67),.023,6)
+    a.beam("rope",(.45,.54,-.50),(.54,.27,-.64),.012,6)
     a.box("accent",(0,.72,.68),(.26,.23,.20))
     a.beam("wood",(0,1.82,.62),(0,2.37,.62),.035)
     a.sphere("bronze",(0,2.37,.62),(.08,.09,.08),1)
+    for i in range(3):
+        a.sphere("bronze",(-.31+i*.31,.53,-.74),(.025,.033,.022),1)
     a.finish(OUT/"hero-ship-v081.glb")
 if __name__=="__main__":
     build_island()
