@@ -34,6 +34,80 @@ function terrace(group,T,material,radius,heightTop,heightBottom,seed,ripple=0){
  const m=add(group,T,g,material);
  m.castShadow=true;return m;
 }
+function landmark(parent,t,T,M){
+ const g=new T.Group();parent.add(g);
+ // Keep the landmark away from village buildings while still standing out on empty islands.
+ g.position.set(t.owner===null?0:.58,0,t.owner===null?-.07:-.51);
+ g.scale.setScalar(t.owner===null?1:.62);
+ const pearl=matte(T,0xfff3db,.43),stone=matte(T,0xcdbd9f),
+   cyan=matte(T,0x61dce7,.24),flower=matte(T,0xef9fba),
+   turquoise=matte(T,0x3db6ba,.28),leaf=matte(T,0x489e6e),
+   amber=matte(T,0xe8b76a),charcoal=matte(T,0x6e7370);
+ if(t.theme==="coast"){
+  pebble(g,T,pearl,.0,.95,0,.33,.17,.25);
+  for(let i=0;i<5;i++){
+   const a=i*2*Math.PI/5;
+   pebble(g,T,pearl,Math.cos(a)*.23,.91,Math.sin(a)*.22,.14,.09,.09);
+  }
+  pebble(g,T,M.gold,0,1.18,0,.10,.11,.09);
+ }else if(t.theme==="waterfall"){
+  pebble(g,T,stone,-.10,1.02,-.10,.37,.39,.34);
+  pebble(g,T,leaf,-.08,1.36,-.11,.30,.10,.29);
+  for(let j=0;j<3;j++)add(g,T,new T.BoxGeometry(.10,.57,.045),cyan,-.28+j*.16,.86,.19);
+  pebble(g,T,turquoise,-.08,.73,.35,.36,.055,.20);
+ }else if(t.theme==="flower"){
+  stalk(g,T,M.wood,.02,1.07,.01,.070,.60,8);
+  for(let j=0;j<7;j++){
+   const a=j*2*Math.PI/7;
+   pebble(g,T,flower,Math.cos(a)*.23,1.45+.04*Math.sin(a),Math.sin(a)*.23,.17,.12,.15);
+  }
+  pebble(g,T,M.gold,0,1.51,0,.14,.13,.12);
+ }else if(t.theme==="coral"){
+  // Translucent lagoon dish, pastel coral fans.
+  pebble(g,T,turquoise,0,.80,.03,.39,.065,.36);
+  for(let j=0;j<6;j++){
+   const a=j*2*Math.PI/6;
+   stalk(g,T,j%2?flower:amber,Math.cos(a)*.35,.87,Math.sin(a)*.32,.062,.24,7);
+   pebble(g,T,j%2?flower:pearl,Math.cos(a)*.35,1.01,Math.sin(a)*.32,.13,.085,.12);
+  }
+ }else if(t.theme==="ruins"){
+  for(const x of [-.29,0,.29]){
+   stalk(g,T,stone,x,1.03,-.08,.09,.53,9);
+   pebble(g,T,pearl,x,1.31,-.08,.13,.055,.12);
+  }
+  add(g,T,new T.BoxGeometry(.96,.15,.30),stone,0,1.39,-.08);
+  pebble(g,T,M.gold,.02,1.52,-.08,.11,.05,.09);
+ }else if(t.theme==="cliff"){
+  pebble(g,T,amber,-.19,1.05,0,.24,.42,.32);
+  pebble(g,T,stone,.20,1.07,-.08,.21,.37,.30);
+  pebble(g,T,amber,.10,1.41,0,.22,.09,.25);
+ }else if(t.theme==="forest"){
+  for(let i=0;i<3;i++){
+   const a=i*2*Math.PI/3;
+   const x=Math.cos(a)*.27,z=Math.sin(a)*.27;
+   stalk(g,T,M.woodDark,x,1.01,z,.046,.38,8);
+   pebble(g,T,i%2?M.tree:M.treeBright,x,1.34,z,.22,.24,.21);
+  }
+ }else if(t.theme==="volcano"){
+  const m=add(g,T,new T.ConeGeometry(.43,.73,10),charcoal,0,1.12,0);
+  pebble(g,T,M.roofRed,0,1.49,0,.17,.046,.17);
+  pebble(g,T,M.coral,0,1.55,0,.09,.10,.09);
+ }else if(t.theme==="arch"){
+  for(const x of [-.26,.26]){
+   stalk(g,T,stone,x,1.07,0,.115,.59,8);
+   pebble(g,T,stone,x,1.42,0,.16,.09,.14);
+  }
+  add(g,T,new T.BoxGeometry(.77,.20,.23),stone,0,1.49,0);
+  pebble(g,T,amber,0,1.62,0,.20,.045,.16);
+ }else if(t.theme==="mist"){
+  for(let i=0;i<5;i++){
+   const a=i*1.256;
+   const p=pebble(g,T,pearl,Math.cos(a)*.28,1.17+Math.sin(a*2)*.06,Math.sin(a)*.25,.25,.14,.20);
+   p.castShadow=false;
+  }
+  pebble(g,T,turquoise,0,.81,0,.29,.06,.26);
+ }
+}
 export function organicFoundation(parent,t,T,M){
  const g=new T.Group();parent.add(g);
  const mat={
@@ -91,6 +165,7 @@ export function organicFoundation(parent,t,T,M){
   pebble(g,T,dark,.65,.86,-.40,.37,.21,.35);
   pebble(g,T,ember,.64,1.08,-.41,.16,.04,.17);
  }
+ landmark(g,t,T,M);
  return g;
 }
 // Distinctly modeled village / city / fortress elements with curved rooftops and battlements.
