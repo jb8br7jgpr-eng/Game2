@@ -24,3 +24,7 @@ body.hide-controls .controls{display:none}body.hide-controls .restore{display:bl
 .error{position:fixed;inset:30% 10%;z-index:15;background:#fff7eb;padding:20px;border-radius:20px;font-size:15px;color:#81443d;overflow:auto}
 [hidden]{display:none!important}@media(min-width:800px){.masthead{left:24px;right:24px}.controls{bottom:24px}.camera-tools{right:26px}.helper{top:76px}}@media(max-width:390px){.back span{display:none}.helper{font-size:9px}.controls{gap:9px}.actions button{font-size:11px;padding:8px}.info strong{font-size:19px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Hero Island: legibility against deep blue ocean. */
+.masthead .brand{color:#fff8e9;text-shadow:0 2px 8px #06455c,0 1px 3px #06374e}
+.masthead .heading p{color:#e6fbff;text-shadow:0 2px 8px #04374d;font-weight:900}
