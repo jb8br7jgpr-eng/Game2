@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#067e9e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="ARCHIPEL — Jeu de conquête tropical miniature en 3D, Vélyra contre Auréon.">
-<title>ARCHIPEL — Les royaumes des marées</title><link rel="stylesheet" href="./styles.css?v=20261014-06f">
+<title>ARCHIPEL — Les royaumes des marées</title><link rel="stylesheet" href="./styles.css?v=20261014-07">
 </head>
 <body>
 <canvas id="world" role="img" aria-label="Plateau miniature 3D de dix îles tropicales"></canvas>
@@ -32,6 +32,6 @@
 <div class="panel-head"><div><div class="stage-caption">VOTRE AVENTURE</div><div class="stage-name" id="stage-name">Bienvenue</div><div class="status-line" id="status-line"></div></div><div class="detail" id="island-detail"><span class="tile-name">ARCHIPEL</span></div></div><div class="panel-guide" id="guide-text">Navigation, construction et conquête</div><div class="actions" id="actions"><button class="action hero" disabled>Chargement 3D…</button></div></section></main>
 <div class="overlay" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-card"><div class="dialog-icon" id="dialog-icon">🏝️</div><h2 class="dialog-title" id="dialog-title">Bienvenue</h2><p class="dialog-text" id="dialog-text"></p><div id="dialog-special"></div><div class="dialog-buttons" id="dialog-buttons"></div></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div><div id="fallback" class="fallback hidden"></div>
-<script type="module" src="./app.js?v=20261014-06f"></script>
+<script type="module" src="./app.js?v=20261014-07"></script>
 <script>setTimeout(()=>{const p=document.getElementById("fallback");if(p&&document.querySelector("#actions .hero:disabled")){p.classList.remove("hidden");p.innerHTML="<h2>Rendu 3D indisponible</h2><p>Vérifie ta connexion, puis recharge ARCHIPEL dans Safari ou Chrome récent.</p>";}},18000);</script>
 </body></html>
