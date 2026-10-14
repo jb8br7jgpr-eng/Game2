@@ -141,30 +141,49 @@ def cliff(asset):
 def bent_palm(asset,x,z,height,sway):
     base=np.array([x,.76,z],float)
     prev=base
-    for i in range(1,8):
-        t=i/7
+    # Curved trunk with gently tapered bark, avoiding perfectly straight rods.
+    for i in range(1,10):
+        t=i/9
         cur=base+np.array([sway*t*t,height*t,-.18*t],float)
-        asset.beam("wood",prev,cur,.085*(1-.41*t))
+        asset.beam("wood",prev,cur,.098*(1-.48*t),9)
         prev=cur
     top=prev
     for j in range(9):
-        a=2*PI*j/9
-        radial=np.array([math.cos(a),0,math.sin(a)])
-        tangent=np.array([-math.sin(a),0,math.cos(a)])
-        vertices=[];faces=[];N=12
-        length=.87+(.18 if j%3==0 else 0)
-        for k in range(N+1):
-            t=k/N
-            mid=top+radial*length*t+np.array([0,.13*math.sin(t*PI)-.29*t*t,0])
-            w=(.185+.022*(j%3))*math.sin(t*PI)**.8
+        angle=2*PI*j/9
+        radial=np.array([math.cos(angle),0,math.sin(angle)])
+        tangent=np.array([-math.sin(angle),0,math.cos(angle)])
+        n=20
+        length=1.04+(.22 if j%3==0 else 0)
+        vertices=[];faces=[]
+        for k in range(n+1):
+            t=k/n
+            spine=top+radial*length*t+np.array([0,.18*math.sin(t*PI)-.38*t*t,0])
+            width=.24*(math.sin(t*PI)**.74)
+            serration=1-(.22 if k%3==2 else 0)
             for side in [-1,1]:
-                pt=mid+tangent*w*side
-                vertices.append(pt.tolist())
-            if k<N:
-                o=2*k;faces.extend(((o,o+1,o+2),(o+1,o+3,o+2)))
+                p=spine+tangent*width*serration*side
+                vertices.append(p.tolist())
+            if k<n:
+                q=k*2
+                faces.extend(((q,q+1,q+2),(q+1,q+3,q+2)))
         asset.mesh("leaf",vertices,faces)
+        # Narrow independent leaflets and fine central ribs for recognizable palms.
+        for k in range(2,18,2):
+            t=k/20
+            mid=top+radial*length*t+np.array([0,.18*math.sin(t*PI)-.38*t*t,0])
+            width=.23*math.sin(t*PI)
+            for side in [-1,1]:
+                tip=mid+tangent*(width+.20)*side+radial*.06+np.array([0,-.085,0])
+                asset.mesh("leaf",[mid.tolist(),tip.tolist(),
+                    (tip+radial*.065+np.array([0,-.025,0])).tolist()],((0,1,2),))
+        for k in range(8):
+            t=k/8;tt=(k+1)/8
+            a=top+radial*length*t+np.array([0,.18*math.sin(t*PI)-.38*t*t,0])
+            b=top+radial*length*tt+np.array([0,.18*math.sin(tt*PI)-.38*tt*tt,0])
+            asset.beam("leaf",a,b,.011,5)
     for i in range(3):
-        asset.sphere("wood",top+[.06*(i-1),-.11,.04],(.095,.11,.095),1)
+        asset.sphere("wood",top+[.07*(i-1),-.12,.045],(.09,.10,.083),1)
+
 def hut(asset):
     # Rebuilt pitched roof as real roof slabs, not overlapping flat boxes.
     x=.40;z=-.80
@@ -225,18 +244,8 @@ def build_island():
     radial_surface(a,"grass",.015,2.50,20)
     radial_surface(a,"sand",2.50,3.48,9)
     cliff(a)
-    # Submerged sandy shelf is part of the environment, beneath transparent waves.
-    uv=[];n=90
-    for ring in [3.48,7.2,42.0]:
-        for k in range(n):
-            t=k*2*PI/n
-            uv.append((math.cos(t)*ring,-.80,math.sin(t)*ring))
-    faces=[]
-    for ring in range(2):
-        for k in range(n):
-            i,j=ring*n+k,ring*n+(k+1)%n
-            faces.extend(((i,j,i+n),(j,j+n,i+n)))
-    a.mesh("sand",uv,faces)
+    # Removed the circular underwater sand disc: continuous seabed shader
+    # now supplies the shallow sandy gradient, without a visible hard edge.
     # Rock masses at coastline; individual faceted geometry with textured normals.
     for j in range(27):
         angle=j*2.399963;radius=2.65+(j%4)*.22
