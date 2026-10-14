@@ -2,6 +2,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --check map-v05.js && node --check map-v06.js && node --check docks-v06.js && node --check game.js && node --check board3d.js && node --check art-v06.js && node --check art-v07.js && node --check dice-v04.js && node --check app.js && node tests/smoke.mjs"
+    "test": "node --check map-v05.js && node --check map-v06.js && node --check docks-v06.js && node --check game.js && node --check board3d.js && node --check art-v06.js && node --check art-v07.js && node --check dice-v04.js && node --check app.js && node tests/smoke.mjs && node --check prototype-v08-models.js && node --check prototype-v08.js"
   }
 }
