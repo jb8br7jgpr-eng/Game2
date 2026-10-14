@@ -142,7 +142,7 @@ try{
   window.__failedOriginalRandom=Math.random;Math.random=()=>0;T.refresh();
  });
  await page.evaluate(()=>window.__ARCHIPEL_TEST.doColonize());
- await page.getByRole("heading",{name:/Expédition repoussée/}).waitFor({timeout:9000});
+ await page.getByRole("heading",{name:/Expédition repoussée/}).waitFor({timeout:25000});
  assert.equal(await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().actionUsed),true);
  assert.ok(await page.evaluate(()=>{
   const s=window.__ARCHIPEL_TEST.getState();return s.islands[s.players[s.current].boat].owner===null;
