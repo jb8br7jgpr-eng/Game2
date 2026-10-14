@@ -46,8 +46,10 @@ try{
  assert.ok(title.includes("conquête"),"start game modal after two island picks, got: "+title);
  await page.getByRole("button",{name:"Jouer"}).click();
  await page.getByRole("button",{name:"Afficher le menu d’actions"}).click();
- await page.waitForTimeout(500); // let CSS visibility transition finish before checking rendered text
- const current=await page.locator("#stage-name").innerText();
+ await page.waitForFunction(()=>!document.body.classList.contains("dock-closed") &&
+    getComputedStyle(document.querySelector("#action-dock")).visibility!=="hidden",{timeout:5000});
+ await page.waitForTimeout(360);
+ const current=(await page.locator("#stage-name").textContent())?.trim()||"";
  assert.ok(current.startsWith("Navigation • ")||current.startsWith("Action • ")||current.startsWith("Fin du tour • "),"current turn stage displayed: "+current);
  assert.equal(await page.locator(".island-label").count(),10);
  assert.equal(await page.locator(".turn-step").count(),3,"three-step turn guidance");
