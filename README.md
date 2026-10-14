@@ -1,12 +1,22 @@
 # ARCHIPEL — Les royaumes des marées 🏝️
 
-**Prototype 3D interactif 0.3** du jeu de plateau miniature imaginé ensemble.
+**Prototype 3D interactif 0.4** du jeu de plateau miniature imaginé ensemble.
 
 ## Jouer
 
 **https://jb8br7jgpr-eng.github.io/Game2/**
 
 Deux joueurs jouent à tour de rôle sur **le même appareil**. Le jeu fonctionne sur un navigateur moderne compatible WebGL 2, avec connexion nécessaire pour charger Three.js depuis le CDN.
+
+### ARCHIPEL 0.4 — nouveaux modèles, perspective, animation et confort
+- **Perspective 3/4 plus basse** sur les reliefs, les remparts et les navires.
+- **Îles organiques** sculptées en anneaux de terrain asymétriques, décors renforcés, détails de village/ville/forteresse, palmiers et éléments propres aux 10 îles.
+- **Navires miniatures retravaillés** : bastingage, cordages, voiles bombées, accents améthyste/ambre, figures de proue de faction et davantage d'ornements selon les niveaux.
+- **Placement aléatoire naturel** sur une carte plus longue, îles séparées d'au moins ~3,35 unités, **environ 20 routes maritimes** et options tactiques plus nombreuses.
+- **Navigation améliorée** : trajet courbe, orientation du navire, léger tangage, sillage, particules et arrivée animée.
+- **Dés à six faces modélisés en CSS 3D** : chaque face comporte ses vrais points ; lancer tournoyant et révélation du résultat de règles lors des départs et combats.
+- **Interface en trois étapes** (Navigation facultative → Action → Fin du tour), couleurs de menu assorties au joueur actif, ressources et informations plus lisibles.
+- Conservation de la carte plein écran, navigation tactile, zoom, recentrage, menu rétractable et mode carte seule.
 
 ### Refonte visuelle et ergonomique 0.3
 - Îles-jouets plus détaillées avec reliefs arrondis, sentiers, végétation, cascades et décors signatures pour chaque territoire.
