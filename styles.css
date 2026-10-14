@@ -324,3 +324,25 @@ body[data-faction="aureon"]{--faction:#d8823d;--faction-shadow:#a4592a;--faction
 @media(prefers-reduced-motion:reduce){
  .treasure-reveal,.treasure-reward-symbol,.treasure-sparkles,.treasure-aura{animation:none!important}
 }
+
+
+/* V0.6: usable island selection across a very large 3D archipelago. */
+.dialog-card:has(.draft-list){width:min(96vw,520px);max-height:89dvh;padding:16px 15px}
+.dialog-card:has(.draft-list) .dialog-title{font-size:23px;margin:6px 0}
+.dialog-card:has(.draft-list) .dialog-text{font-size:12px;line-height:1.4;margin:7px 0 10px}
+.draft-list{
+ max-height:min(55dvh,480px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;
+ display:grid;gap:7px;text-align:left;padding:3px 4px 8px;
+}
+.draft-island-card{border:1px solid #ddd3b9;background:#fffdf8;border-radius:14px;padding:9px 10px;
+ box-shadow:0 2px 0 #ccbd9588}
+.draft-island-name{font-family:Georgia,serif;color:#31596c;font-size:15px;font-weight:800}
+.draft-island-resources{font-size:11px;color:#58747d;font-weight:800;margin:3px 0 7px}
+.draft-island-controls{display:flex;gap:7px}
+.draft-island-controls button{padding:7px 8px;min-height:34px;flex:1;border-radius:9px;font-size:11px;font-weight:900;
+ border:1px solid #c5baa1;background:#f5eee1;color:#526873;box-shadow:0 2px 0 #cdb994}
+.draft-island-controls .draft-choose{background:var(--faction);border-color:var(--faction-border);
+ box-shadow:0 2px 0 var(--faction-shadow);color:#fff}
+.draft-island-controls button:active{transform:translateY(2px)}
+@media(max-width:390px){.dialog-card:has(.draft-list){padding:11px 12px}
+ .draft-list{max-height:54dvh}.draft-island-name{font-size:14px}}
