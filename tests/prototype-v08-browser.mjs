@@ -40,10 +40,10 @@ try{
  await page.locator("#light").click();
  const boat0=await page.evaluate(()=>window.__ARCHIPEL08_TEST.getBoat().position.x);
  await page.locator("#sail").click();
- await page.waitForTimeout(1300);
+ await page.waitForFunction(start=>Math.abs(window.__ARCHIPEL08_TEST.getBoat().position.x-start)>.1,boat0,{timeout:12000});
  const boat1=await page.evaluate(()=>window.__ARCHIPEL08_TEST.getBoat().position.x);
  assert.ok(Math.abs(boat1-boat0)>.1,"boat navigates on a real timed route");
- await page.waitForTimeout(2300);
+ await page.waitForFunction(()=>!document.getElementById("sail").disabled,null,{timeout:12000});
  assert.equal(await page.locator("#sail").isEnabled(),true,"sail control re-enabled");
  await page.locator("#ui-toggle").click();
  assert.ok(await page.locator("body").evaluate(n=>n.classList.contains("hide-controls")));
