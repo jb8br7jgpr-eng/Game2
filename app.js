@@ -645,6 +645,12 @@ async function joinOnline(e){
 async function resumeOnline(){
  const saved=OnlineClient.restore();
  const invitation=new URLSearchParams(location.search).get("room");
+ // A newly shared invitation takes priority over an unrelated old session.
+ if(saved&&invitation&&saved.code?.toUpperCase()!==invitation.trim().toUpperCase()){
+  $("online-join-code").value=invitation.trim().toUpperCase();
+  showOnlineLobby("join");
+  return;
+ }
  if(!saved){
   if(invitation){
    $("online-join-code").value=invitation.trim().toUpperCase();
