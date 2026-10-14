@@ -1,7 +1,8 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-import {FACTIONS,connected} from "./game.js?v=20261014-03";
+import {FACTIONS,connected} from "./game.js?v=20261014-05";
 import {enhanceIsland,enhanceShip} from "./art-v03.js";
 import {organicFoundation,architectureDetail,shipDetail} from "./art-v04.js";
+import {craftIslandV05,craftShipV05} from "./art-v05.js";
 
 // Procedural 3D toy models: real geometry, rounded silhouettes, soft sunlight.
 // No pre-rendered concept-art pasted onto flat images.
@@ -141,6 +142,7 @@ function island3D(tile){
  }
  enhanceIsland(g,tile,THREE,M);
  architectureDetail(g,tile,THREE,M);
+ craftIslandV05(g,tile,THREE,M);
  // Invisible but genuinely 3D tap target, with tagged object.
  const pick=mesh(new THREE.CylinderGeometry(1.25,1.25,.65,18),
    new THREE.MeshBasicMaterial({visible:false}),0,.66,0,false);
@@ -176,6 +178,7 @@ function ship3D(player,level){
  ball(g,M.gold,0,.22,-.65,.08,.09,.10);
  enhanceShip(g,player,level,THREE,M);
  shipDetail(g,player,level,THREE,M);
+ craftShipV05(g,player,level,THREE,M);
  g.scale.setScalar(SIZE);g.userData.player=player;
  return g;
 }
@@ -185,9 +188,9 @@ export class Board3D{
   this.scene.background=new THREE.Color(0x6eced2);
   this.scene.fog=new THREE.Fog(0x7bd5d5,22,75);
   this.camera=new THREE.OrthographicCamera(-4,4,9,-9,.1,120);
-  this.camera.position.set(0,23,27);this.camera.lookAt(0,0,0);
+  this.camera.position.set(6.5,16.5,30);this.camera.lookAt(0,0,0);
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
-  this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.45));
+  this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.3));
   this.renderer.outputColorSpace=THREE.SRGBColorSpace;
   this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
   this.renderer.toneMappingExposure=1.18;
@@ -239,9 +242,9 @@ export class Board3D{
   this.islandRoot=new THREE.Group();this.scene.add(this.islandRoot);
   this.boatRoot=new THREE.Group();this.scene.add(this.boatRoot);
   this.outline=new THREE.Group();this.scene.add(this.outline);
-  this.currentGame=null;this.tweens=[];this.dragged=false;this.scale=.80;
+  this.currentGame=null;this.tweens=[];this.dragged=false;this.scale=.82;
   this.center=new THREE.Vector3(0,0,0);this.pointers=new Map();this.pinchDistance=0;this.lastTap=0;
-  this.wakes=[];this.wakeClock=0;
+  this.wakes=[];this.wakeClock=0;this.followPoint=null;this.seaPulse=0;
   this.wakeGeometry=new THREE.SphereGeometry(.095,8,5);
   this.wakeMaterial=new THREE.MeshBasicMaterial({color:0xf2fffb,transparent:true,opacity:.6,depthWrite:false});
   this.markers=document.getElementById("markers");this.markerNodes=[];
@@ -282,15 +285,15 @@ export class Board3D{
   });
  }
  updateCamera(){
-  this.center.x=THREE.MathUtils.clamp(this.center.x,-6.5,6.5);
-  this.center.z=THREE.MathUtils.clamp(this.center.z,-12.8,12.8);
-  this.camera.position.set(this.center.x,23,this.center.z+27);
+  this.center.x=THREE.MathUtils.clamp(this.center.x,-10.5,10.5);
+  this.center.z=THREE.MathUtils.clamp(this.center.z,-22.0,22.0);
+  this.camera.position.set(this.center.x+6.5,16.5,this.center.z+30);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   this.canvas.dataset.cameraCenter=this.center.x.toFixed(3)+","+this.center.z.toFixed(3);
   this.positionMarkers();
  }
  centerView(){
-  this.center.set(0,0,0);this.scale=.80;
+  this.center.set(0,0,0);this.scale=.82;
   this.updateCamera();this.resize();
  }
  zoomBy(factor){
@@ -323,6 +326,7 @@ export class Board3D{
   }
  }
  pointerDown(e){
+  this.followPoint=null;
   if(e.button!==0)return;
   e.preventDefault();
   this.canvas.setPointerCapture?.(e.pointerId);
@@ -407,16 +411,16 @@ export class Board3D{
    const norm=direction.clone().normalize(),perp=new THREE.Vector3(-norm.z,0,norm.x);
    const offset=Math.sin((i+2)*(j+3))*.16;
    const sample=u=>start.clone().lerp(end,u).addScaledVector(perp,Math.sin(u*Math.PI)*offset);
-   const count=Math.max(4,Math.floor((distance-2)/.34));
+   const count=Math.max(5,Math.floor((distance-2)/.48));
    for(let n=0;n<count;n++){
-    const u=.18+(.64*n/count),vU=Math.min(.82,u+.64/count*.48);
+    const u=.135+(.73*n/count),vU=Math.min(.865,u+.73/count*.46);
     const one=sample(u),two=sample(vU);
     if(one.distanceTo(two)<.04)continue;
     segments.push({one,two,i,j});
    }
   }
-  const shape=new THREE.CylinderGeometry(.043,.043,1,6);
-  const material=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.77,depthWrite:false});
+  const shape=new THREE.CylinderGeometry(.061,.061,1,6);
+  const material=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.92,depthWrite:false});
   const marks=new THREE.InstancedMesh(shape,material,segments.length);
   marks.instanceMatrix.setUsage(THREE.StaticDrawUsage);
   const dummy=new THREE.Object3D(),axis=new THREE.Vector3(0,1,0);
@@ -451,7 +455,7 @@ export class Board3D{
     this.boatRoot.add(g);g.userData.popAge=.65;g.userData.defaultScale=g.scale.x;this.boatModels[i]={group:g,level:p.ship,player:i};
    }
    const g=this.boatModels[i].group;g.visible=p.boat!==null;
-   if(p.boat!==null&&!g.userData.inMotion){const t=game.islands[p.boat];g.position.x=t.x+.8;g.position.z=t.z+.65}
+   if(p.boat!==null&&!g.userData.inMotion){const t=game.islands[p.boat];g.position.x=t.x+1.32;g.position.z=t.z+.89}
   });
   this.focus(game.selected??-1,game);
  }
@@ -477,7 +481,11 @@ export class Board3D{
  async sail(player,to,duration=950){
   const group=this.boatModels[player]?.group;if(!group)return;
   const t=this.currentGame.islands[to],end=v(t.x+1.32,.32,t.z+.89);
-  return this.tweenBoat(group,end,duration);
+  // Longer sea lanes take a little longer; the camera gently follows the ship.
+  const distance=group.position.distanceTo(end);
+  this.followPoint=new THREE.Vector3(t.x,0,t.z);
+  try{return await this.tweenBoat(group,end,Math.min(2400,Math.max(1000,duration,distance*165)));}
+  finally{this.followPoint=null}
  }
  tweenBoat(group,end,duration=1180){
   return new Promise(resolve=>{
@@ -493,15 +501,41 @@ export class Board3D{
    this.tweens.push({group,from,end,curve,duration,elapsed:0,resolve,heading:Math.atan2(-dx,-dz)});
   });
  }
+ async cannonBall(from,to,hit=true){
+  const sphere=mesh(new THREE.SphereGeometry(.11,10,8),
+    new THREE.MeshStandardMaterial({color:0x434b57,metalness:.3,roughness:.44}));
+  sphere.castShadow=false;
+  this.scene.add(sphere);
+  const start=performance.now(),length=620,origin=from.clone(),goal=to.clone();
+  await new Promise(resolve=>{
+   const frame=(now)=>{
+    const t=Math.min(1,(now-start)/length),e=t*t*(3-2*t);
+    sphere.position.lerpVectors(origin,goal,e);
+    sphere.position.y=.42+Math.sin(t*Math.PI)*1.42;
+    if(t>=1){resolve();return}
+    requestAnimationFrame(frame);
+   };requestAnimationFrame(frame);
+  });
+  this.scene.remove(sphere);sphere.geometry.dispose();sphere.material.dispose();
+  this.spark(to.x,to.z,hit?0xffd48b:0xd7ffff);
+  for(let j=0;j<5;j++)this.createWake(to.x+(Math.random()-.5)*.6,to.z+(Math.random()-.5)*.6);
+ }
  async battleMotion(event){
   const g=this.boatModels[event.attacker].group,target=this.currentGame.islands[event.to],start=g.position.clone();
-  const mid=v(start.x+(target.x+1.32-start.x)*.67,.32,start.z+(target.z+.89-start.z)*.67);
-  await this.tweenBoat(g,mid,670);
-  this.spark(target.x+.35,target.z+.45,event.win?0xffe1a2:0xffa58e);
-  await new Promise(r=>setTimeout(r,350));
-  if(event.win)await this.tweenBoat(g,v(target.x+1.32,.32,target.z+.89),470);
-  else await this.tweenBoat(g,start,570);
+  const mid=v(start.x+(target.x+1.32-start.x)*.70,.32,start.z+(target.z+.89-start.z)*.70);
+  await this.tweenBoat(g,mid,Math.min(1400,Math.max(850,start.distanceTo(mid)*145)));
+  // Real projectile arc and impact on the mini-diorama.
+  this.spark(g.position.x,g.position.z,0xffd27c);
+  await this.cannonBall(g.position.clone(),v(target.x,.42,target.z+.08),event.win);
+  if(event.win){
+   this.spark(target.x,target.z,0xffe1a2);
+   await this.tweenBoat(g,v(target.x+1.32,.32,target.z+.89),590);
+  }else{
+   this.spark(g.position.x,g.position.z,0xa0eaff);
+   await this.tweenBoat(g,start,850);
+  }
  }
+
  spark(x,z,color=0xffe6ac){
   const particles=new THREE.Group();this.scene.add(particles);
   const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:1});
@@ -533,6 +567,11 @@ export class Board3D{
   const dt=Math.min(.06,this.clock.getDelta()),time=this.clock.elapsedTime;
   this.water.uniforms.time.value=time;
   this.animateWake(dt);
+  if(this.followPoint){
+   this.center.x=THREE.MathUtils.lerp(this.center.x,this.followPoint.x,.032);
+   this.center.z=THREE.MathUtils.lerp(this.center.z,this.followPoint.z,.032);
+   this.updateCamera();
+  }
   this.positionMarkers();
   this.islandModels.forEach(item=>{
    const g=item.group,age=g.userData.popAge;
@@ -557,7 +596,11 @@ export class Board3D{
    t.group.rotation.y=Math.atan2(-direction.x,-direction.z);
    t.group.rotation.z=Math.sin(u*Math.PI*5)*.065;
    this.wakeClock+=dt;
-   if(this.wakeClock>.10){this.wakeClock=0;this.createWake(t.group.position.x,t.group.position.z)}
+   if(this.wakeClock>.080){this.wakeClock=0;
+    const hd=t.curve.getTangent(ease),side=new THREE.Vector3(-hd.z,0,hd.x).normalize();
+    this.createWake(t.group.position.x+side.x*.23,t.group.position.z+side.z*.23);
+    this.createWake(t.group.position.x-side.x*.23,t.group.position.z-side.z*.23);
+   }
    if(u>=1){t.group.userData.inMotion=false;this.tweens.splice(this.tweens.indexOf(t),1);t.resolve()}
   }
   this.renderer.render(this.scene,this.camera);
