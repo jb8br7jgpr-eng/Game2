@@ -520,3 +520,6 @@ body[data-faction="aureon"] .island-label.retreat-target{
 .island-faction:empty{display:none}
 .island-label.violet .island-faction{color:#7542b6}
 .island-label.orange .island-faction{color:#b96a27}
+
+/* Stationary glowing retreat buttons remain reliably clickable on touchscreens. */
+@keyframes retreatGlow{0%{filter:brightness(1)}100%{filter:brightness(1.18) drop-shadow(0 0 8px #ffcba0)}}
