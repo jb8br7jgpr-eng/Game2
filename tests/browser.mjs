@@ -32,23 +32,25 @@ try{
  const cubes=await page.locator(".die-object").count();
  assert.equal(cubes,2,"real animated 3D dice rendered for first pick");
  await page.getByRole("button",{name:/Choisir son île/}).click();
- // Draft on a larger scrollable archipelago: pick two actually visible islands.
- await page.getByRole("button",{name:"Masquer le menu d’actions"}).click();
- const areas=await page.locator(".island-label").evaluateAll(nodes=>nodes.map((node,id)=>{
-  const r=node.getBoundingClientRect();return{id,x:r.x+r.width/2,y:r.y-28};
- }).filter(p=>p.y>170&&p.y<690&&p.x>45&&p.x<335));
- assert.ok(areas.length>=2,"two accessible starting islands in the current mobile view");
- await page.mouse.click(areas[0].x,areas[0].y);
- await page.waitForTimeout(170);
- await page.mouse.click(areas[1].x,areas[1].y);
+ // V0.6: wide irregular archipelago needs reliable, accessible island selection.
+ await page.getByRole("button",{name:/Voir les 10 îles/}).click();
+ assert.equal(await page.locator(".draft-island-card").count(),10,"all ten draft islands listed with income");
+ const firstIncome=await page.locator(".draft-island-resources").first().innerText();
+ assert.ok(firstIncome.includes("bois")&&firstIncome.includes("pierre"),"draft income readable");
+ await page.locator(".draft-view").first().click();
+ assert.equal(await page.locator("#dialog.active").count(),0,"viewing an island closes catalog");
+ const observedCenter=await page.locator("#world").getAttribute("data-camera-center");
+ assert.notEqual(observedCenter,"0.000,0.000","3D island scouting pans camera");
+ await page.getByRole("button",{name:/Voir les 10 îles/}).click();
+ await page.locator(".draft-choose").first().click();
+ await page.getByRole("button",{name:/Voir les 10 îles/}).click();
+ assert.equal(await page.locator(".draft-island-card").count(),9,"claimed island absent from second choice");
+ await page.locator(".draft-choose").first().click();
  await page.locator("#dialog.active").waitFor({timeout:10000});
  const title=await page.locator("#dialog-title").innerText();
  assert.ok(title.includes("conquête"),"start game modal after two island picks, got: "+title);
  await page.getByRole("button",{name:"Jouer"}).click();
- await page.getByRole("button",{name:"Afficher le menu d’actions"}).click();
- await page.waitForFunction(()=>!document.body.classList.contains("dock-closed") &&
-    getComputedStyle(document.querySelector("#action-dock")).visibility!=="hidden",{timeout:5000});
- await page.waitForTimeout(360);
+ await page.waitForTimeout(250);
  const current=(await page.locator("#stage-name").textContent())?.trim()||"";
  assert.ok(current.startsWith("Navigation • ")||current.startsWith("Action • ")||current.startsWith("Fin du tour • "),"current turn stage displayed: "+current);
  assert.equal(await page.locator(".island-label").count(),10);
@@ -66,7 +68,8 @@ try{
  const zoomedOut=Number(await canvas.getAttribute("data-camera-zoom"));
  assert.ok(zoomedOut<zoomed,"zoom-out changes camera zoom");
  await page.getByRole("button",{name:"Recentrer la carte"}).click();
- assert.ok(Math.abs(Number(await canvas.getAttribute("data-camera-zoom"))-.82)<.015,"recenter restores initial zoom");
+ const expectedOverview=await page.evaluate(()=>window.__ARCHIPEL_TEST.getBoard().overviewZoom());
+ assert.ok(Math.abs(Number(await canvas.getAttribute("data-camera-zoom"))-expectedOverview)<.015,"recenter fits entire irregular archipelago");
  const initialCenter=await canvas.getAttribute("data-camera-center");
  const canvasRect=await canvas.boundingBox();
  await page.mouse.move(canvasRect.x+canvasRect.width*.50,canvasRect.y+canvasRect.height*.49);
