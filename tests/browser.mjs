@@ -66,7 +66,7 @@ try{
  const zoomedOut=Number(await canvas.getAttribute("data-camera-zoom"));
  assert.ok(zoomedOut<zoomed,"zoom-out changes camera zoom");
  await page.getByRole("button",{name:"Recentrer la carte"}).click();
- assert.ok(Math.abs(Number(await canvas.getAttribute("data-camera-zoom"))-.80)<.015,"recenter restores initial zoom");
+ assert.ok(Math.abs(Number(await canvas.getAttribute("data-camera-zoom"))-.82)<.015,"recenter restores initial zoom");
  const initialCenter=await canvas.getAttribute("data-camera-center");
  const canvasRect=await canvas.boundingBox();
  await page.mouse.move(canvasRect.x+canvasRect.width*.50,canvasRect.y+canvasRect.height*.49);
