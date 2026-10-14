@@ -16,13 +16,25 @@ try{
  await page.locator("#loading").waitFor({state:"hidden",timeout:25000});
  assert.equal(await page.locator("#error").isVisible(),false,"no fatal error overlay");
  assert.ok(await page.evaluate(()=>Boolean(window.__ARCHIPEL08_TEST?.getRenderer()?.getContext())),"3D WebGL renderer initialized");
- assert.equal(await page.evaluate(()=>window.__ARCHIPEL08_TEST?.getVisuals()?.quality),"GLB-PBR","prebaked textured glTF models are loaded — not the old procedural fallback");
+ assert.equal(await page.evaluate(()=>window.__ARCHIPEL08_TEST?.getVisuals()?.quality),"GLB-PBR-V082","V0.8.2 prebuilt textured glTF models load without fallback");
  const materialNames=await page.evaluate(()=>{
   const names=new Set(),scene=window.__ARCHIPEL08_TEST.getScene();
   scene.traverse(node=>{if(node.isMesh)for(const m of Array.isArray(node.material)?node.material:[node.material])if(m?.map)names.add(m.name)});
   return [...names];
  });
- assert.ok(materialNames.length>=6,"multiple distinct PBR image-textured materials actually rendered: "+JSON.stringify(materialNames));
+ assert.ok(materialNames.length>=10,"ten or more independently textured PBR materials present: "+JSON.stringify(materialNames));
+ const pbrMaps=await page.evaluate(()=>{
+   let normals=0,roughness=0;
+   window.__ARCHIPEL08_TEST.getScene().traverse(n=>{
+    if(n.isMesh){
+     const mats=Array.isArray(n.material)?n.material:[n.material];
+     for(const m of mats){if(m?.normalMap)normals++;if(m?.roughnessMap)roughness++}
+    }
+   });
+   return {normals,roughness};
+ });
+ assert.ok(pbrMaps.normals>=6,"detailed V0.8.2 normal-mapped island and hull materials "+JSON.stringify(pbrMaps));
+ assert.ok(pbrMaps.roughness>=6,"V0.8.2 roughness textures actually imported into Three.js "+JSON.stringify(pbrMaps));
 
  const counts=await page.evaluate(()=>{
   const t=window.__ARCHIPEL08_TEST,c=t.getScene().children;
@@ -43,6 +55,12 @@ try{
  assert.ok(counts.lights>=3,"lighting rig present");
  mkdirSync("artifacts",{recursive:true});
  await page.screenshot({path:"artifacts/archipel-v08-iphone.png"});
+ // Hero-detail close-up for verifying that rocks, roof and palm leaflets hold up at zoom.
+ await page.locator("#zoom-plus").click();
+ await page.locator("#zoom-plus").click();
+ await page.waitForTimeout(200);
+ await page.screenshot({path:"artifacts/archipel-v082-details.png"});
+ await page.locator("#camera-reset").click();
  const z1=await page.evaluate(()=>window.__ARCHIPEL08_TEST.getControls().distance);
  await page.locator("#zoom-plus").click();
  const z2=await page.evaluate(()=>window.__ARCHIPEL08_TEST.getControls().distance);
