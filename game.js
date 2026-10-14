@@ -19,7 +19,8 @@ export function newGame(rng=Math.random){
   const places=mix(makePositions(rng),rng);
   const islands=ISLANDS.map(([name,theme],i)=>({
     id:i,name,theme,x:places[i][0],z:places[i][1],
-    wood:1+Math.floor(rng()*3),stone:1+Math.floor(rng()*3),owner:null,level:0
+    wood:1+Math.floor(rng()*3),stone:1+Math.floor(rng()*3),owner:null,level:0,
+    difficulty:3+Math.floor(rng()*3)
   }));
   return {
     stage:"roll",islands,edges:makeEdges(islands),
@@ -79,23 +80,44 @@ function advanceIfWin(s){
   if(owned(s,s.current).length>=7){s.winner=s.current;s.winReason="domination";s.stage="ended";return true}
   return false;
 }
+// Expedition difficulty is visible from the outset. Rolls and settlement
+// upgrades use the same ship + (level - 1) rule as combat.
+export function previewColonization(s){
+ if(s.stage!=="play"||s.actionUsed||s.current===null)throw Error("Expédition indisponible.");
+ const p=s.players[s.current],tile=s.islands[p.boat];
+ if(!tile||tile.owner!==null)throw Error("Le bateau doit être sur une île neutre.");
+ const bonus=p.ship-1,difficulty=tile.difficulty;
+ const winningSides=Math.max(0,Math.min(6,7+bonus-difficulty));
+ return {island:tile.id,difficulty,shipLevel:p.ship,bonus,winningSides,
+  successPercent:Math.round(winningSides/6*100),totalSides:6,
+  range:[1+bonus,6+bonus]};
+}
 export function colonize(s,rng=Math.random){
-  const p=s.players[s.current],tile=s.islands[p.boat];
-  if(s.stage!=="play"||s.actionUsed||tile.owner!==null)throw Error("Colonisation impossible.");
-  tile.owner=s.current;s.actionUsed=true;s.serial++;
-  const won=advanceIfWin(s);
-  if(won)return {type:"end",reason:"domination",winner:s.winner};
-  if(!s.treasureFound&&tile.id===s.treasure){
-    s.treasureFound=true;
-    const options=["cargo"];
-    if(p.ship<3)options.push("ship");if(tile.level<2)options.push("fort");
-    const gift=options[Math.floor(rng()*options.length)];
-    if(gift==="cargo"){p.wood=Math.min(40,p.wood+10);p.stone=Math.min(40,p.stone+10)}
-    else if(gift==="ship")p.ship++;
-    else tile.level++;
-    return {type:"treasure",island:tile.id,gift,player:s.current};
-  }
-  return {type:"colonize",island:tile.id,player:s.current};
+ const conditions=previewColonization(s);
+ const p=s.players[s.current],tile=s.islands[p.boat];
+ const die=dice(rng),total=die+conditions.bonus;
+ s.actionUsed=true;s.serial++;
+ if(total<conditions.difficulty){
+  return {type:"expedition",success:false,island:tile.id,player:s.current,
+   die,total,bonus:conditions.bonus,difficulty:tile.difficulty,
+   message:"L'expédition échoue : ton bateau reste sur place. Tu pourras réessayer à ton prochain tour."};
+ }
+ tile.owner=s.current;
+ const result={type:"colonize",success:true,island:tile.id,player:s.current,
+   die,total,bonus:conditions.bonus,difficulty:tile.difficulty};
+ if(advanceIfWin(s))return {...result,type:"end",reason:"domination",winner:s.winner};
+ if(!s.treasureFound&&tile.id===s.treasure){
+  s.treasureFound=true;
+  const options=["cargo"];
+  if(p.ship<3)options.push("ship");
+  if(tile.level<2)options.push("fort");
+  const gift=options[Math.floor(rng()*options.length)];
+  if(gift==="cargo"){p.wood=Math.min(40,p.wood+10);p.stone=Math.min(40,p.stone+10)}
+  else if(gift==="ship")p.ship++;
+  else tile.level++;
+  return {...result,type:"treasure",gift};
+ }
+ return result;
 }
 export function upgradeShip(s){
   if(s.stage!=="play"||s.actionUsed)throw Error("Action indisponible.");
