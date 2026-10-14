@@ -264,12 +264,14 @@ export class Board3D{
   const aspect=w/h,fullWidth=Math.max(8.65,aspect*17.6),halfW=fullWidth/2,halfH=halfW/aspect;
   this.camera.left=-halfW;this.camera.right=halfW;this.camera.top=halfH;this.camera.bottom=-halfH;
   this.camera.zoom=this.scale;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h,false);
+  this.canvas.dataset.cameraZoom=this.scale.toFixed(3);
  }
  updateCamera(){
   this.center.x=THREE.MathUtils.clamp(this.center.x,-6.5,6.5);
   this.center.z=THREE.MathUtils.clamp(this.center.z,-8.5,8.5);
   this.camera.position.set(this.center.x,29,this.center.z+17);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
+  this.canvas.dataset.cameraCenter=this.center.x.toFixed(3)+","+this.center.z.toFixed(3);
  }
  centerView(){
   this.center.set(0,0,0);this.scale=.89;
