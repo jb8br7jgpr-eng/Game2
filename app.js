@@ -2,8 +2,8 @@ import {
  FACTIONS,newGame,connected,owned,score,rollForStart,chooseStart,
  beginTurn,canNavigate,canAttack,previewAttack,navigate,colonize,upgradeShip,upgradeIsland,
  attack,refugeOptions,retreat,finishTurn
-} from "./game.js?v=20261014-05";
-import {Board3D} from "./board3d.js?v=20261014-05";
+} from "./game.js?v=20261014-06";
+import {Board3D} from "./board3d.js?v=20261014-06";
 import {animateDice} from "./dice-v04.js";
 const $=id=>document.getElementById(id);
 let state=newGame(),locked=false;
@@ -150,17 +150,59 @@ async function doRoll(){
  }catch(e){toast(e.message)}finally{locked=false}
 }
 
-function doColonize(){
- if(locked)return;try{
- const e=colonize(state);refresh();
- const t=currentIsland();board.spark(t.x,t.z,0xffe4a4);
- if(e.type==="treasure"){
-  const prize={cargo:"10 bois et 10 pierres",ship:"un niveau de navire supplémentaire",fort:"une amélioration des fortifications"}[e.gift];
-  modal({icon:"💎",title:"Le trésor secret !",text:"Un coffre ancien vient d'être découvert sur "+t.name+" ! Récompense : "+prize+".",special:'<div class="treasure">✦ 📦 ✦</div>',buttons:[{label:"Magnifique !",click:()=>{}}]});
- }else if(e.type==="end")showEnding();
- else toast("🚩 "+t.name+" rejoint "+name(state.current)+" !");
- }catch(ex){toast(ex.message)}
+async function doColonize(){
+ if(locked)return;
+ locked=true;
+ try{
+  const active=state.current,before={wood:state.players[active].wood,stone:state.players[active].stone};
+  const event=colonize(state);
+  refresh();
+  const tile=state.islands[state.players[active].boat];
+  board.spark(tile.x,tile.z,0xffe3a2);
+  if(event.type==="treasure"){
+   // Exact award descriptions (the +10 resource gift still respects the 40 cap).
+   const rewards={
+    cargo:{
+     icon:"🪵",type:"PROVISIONS ROYALES",title:"Un coffre de ressources !",
+     detail:"Tu gagnes du bois et de la pierre pour développer tes îles.",
+     amount:"+"+(state.players[active].wood-before.wood)+" bois · +"+(state.players[active].stone-before.stone)+" pierre",
+     note:"Récompense de +10 par ressource, dans la limite de 40."
+    },
+    ship:{
+     icon:"⛵",type:"PLAN DE MAÎTRE NAVIGATEUR",title:"Ton navire est amélioré !",
+     detail:"La flotte de "+name(active)+" reçoit immédiatement un niveau gratuit.",
+     amount:"Navire niveau "+state.players[active].ship,
+     note:"Bonus d'attaque actuel : +"+(state.players[active].ship-1)+"."
+    },
+    fort:{
+     icon:"🏰",type:"FAVEUR DES BÂTISSEURS",title:"Une ville offerte !",
+     detail:"Les bâtisseurs améliorent gratuitement "+tile.name+".",
+     amount:["Village","Ville","Ville fortifiée"][tile.level]+" · niveau "+tile.level,
+     note:"Défense locale améliorée de +1."
+    }
+   };
+   const prize=rewards[event.gift];
+   await board.revealTreasure(tile.id,event.gift);
+   modal({
+    icon:"💎",title:"Trésor découvert sur "+tile.name+" !",
+    text:prize.detail,
+    special:'<div class="treasure-reveal '+event.gift+'"><div class="treasure-aura" aria-hidden="true">✦ ✧ ✦</div>'+
+      '<div class="treasure-reward-symbol" aria-hidden="true">'+prize.icon+'</div>'+
+      '<div class="treasure-kind">'+prize.type+'</div>'+
+      '<div class="treasure-reward-title">'+prize.title+'</div>'+
+      '<div class="treasure-amount">'+prize.amount+'</div>'+
+      '<div class="treasure-note">'+prize.note+'</div>'+
+      '<div class="treasure-sparkles" aria-hidden="true">✧ ✦ ✧ ✦ ✧</div></div>',
+    buttons:[{label:"✨ Récupérer mon trésor",click:()=>{
+      board.spark(tile.x,tile.z,0xffefb2);
+    }}]
+   });
+  }else if(event.type==="end")showEnding();
+  else toast("🚩 "+tile.name+" rejoint "+name(active)+" !");
+ }catch(error){toast(error.message)}
+ finally{locked=false;refresh()}
 }
+
 function doShip(){
  try{const e=upgradeShip(state);refresh();const t=currentIsland();board.spark(t.x,t.z,0xdcbaff);toast("⛵ Navire amélioré au niveau "+e.level+" !")}catch(ex){toast(ex.message)}
 }
