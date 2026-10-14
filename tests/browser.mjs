@@ -112,6 +112,31 @@ try{
  const spent=await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().actionUsed);
  assert.equal(spent,true,"confirmed attack consumes exactly one action");
  console.log("PASS: attack preview, accurate forces, cancel without mutation, confirmed dice combat");
+ // V0.6 treasure: force a neutral discovery, verify animated 3D chest & exact gift.
+ await page.evaluate(()=>{
+  document.getElementById("dialog").classList.remove("active");
+  const T=window.__ARCHIPEL_TEST,s=T.getState();
+  const island=s.islands.find(i=>i.owner===null);
+  if(!island)throw Error("no neutral island available for treasure test");
+  s.stage="play";s.actionUsed=false;s.moveUsed=false;s.selected=island.id;
+  s.players[s.current].boat=island.id;
+  s.treasure=island.id;s.treasureFound=false;
+  window.__treasureOriginalRandom=Math.random;
+  Math.random=()=>0; // uniform reward category selects 'cargo'
+  T.refresh();
+ });
+ await page.evaluate(()=>window.__ARCHIPEL_TEST.doColonize());
+ await page.getByRole("heading",{name:/Trésor découvert sur/}).waitFor({timeout:14000});
+ assert.ok(await page.locator(".treasure-reveal.cargo").isVisible(),"specific treasure type and card are visible");
+ const reward=await page.locator(".treasure-reveal").innerText();
+ assert.ok(reward.includes("bois")&&reward.includes("pierre"),"player can identify exact wood/stone reward");
+ assert.ok(await page.getByRole("button",{name:/Récupérer mon trésor/}).isVisible(),"treasure remains visible until manually confirmed");
+ await page.screenshot({path:"artifacts/archipel-v06-treasure.png"});
+ const discovery=await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().treasureFound);
+ assert.equal(discovery,true,"treasure was collected exactly once");
+ await page.getByRole("button",{name:/Récupérer mon trésor/}).click();
+ await page.evaluate(()=>{Math.random=window.__treasureOriginalRandom});
+ console.log("PASS: island treasure animated and clear reward collected manually");
  assert.deepEqual(errors,[],"No uncaught JavaScript errors");
  console.log("PASS: touch a pair of 3D islands, draft, HUD, 10 resource markers, no JS errors");
 }finally{await browser?.close();server.kill("SIGTERM")}
