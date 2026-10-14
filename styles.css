@@ -111,3 +111,60 @@ button:active:not(:disabled){transform:translateY(2px) scale(.98)}
 .island-label.orange{border-color:#e29a54;box-shadow:0 2px 0 #bd6b3280,0 3px 9px #043c5c35}
 .island-label.active{filter:drop-shadow(0 0 7px #ffe9a5);scale:1.08}
 @media(max-width:375px){.island-label{min-width:51px;padding:3px 4px}.island-label b{font-size:10px}.island-label span{font-size:9px}}
+
+
+/* ARCHIPEL 0.3 — viewport tools, collapsible controls, map-only mode. */
+.camera-controls{
+ position:fixed;z-index:6;right:max(10px,env(safe-area-inset-right));
+ top:48%;transform:translateY(-50%);
+ display:grid;gap:7px;pointer-events:auto;
+}
+.camera-btn{
+ display:grid;place-items:center;width:43px;height:43px;border-radius:15px;
+ border:1px solid #ffe7bb;background:linear-gradient(145deg,#fffdf1e8,#e9f3ebee);
+ color:#31556a;font-size:25px;font-weight:800;
+ box-shadow:0 3px 0 #ad936bd1,0 5px 16px #00446177;
+ backdrop-filter:blur(10px);
+ transition:transform .15s,background .2s;
+}
+.camera-btn.center{font-size:28px;color:#966a3f}
+.dock-handle{
+ pointer-events:auto;display:block;min-height:33px;margin:0 13px 8px auto;
+ padding:6px 14px;border:1px solid #efdda9;background:#fff7ddec;
+ box-shadow:0 3px 0 #c4a36c,0 5px 12px #033c5670;
+ border-radius:13px;color:#365d67;
+ font-size:11px;font-weight:900;backdrop-filter:blur(12px);
+}
+.bottom-area .control-panel{transform-origin:bottom;transition:opacity .28s ease,transform .28s ease,visibility .28s}
+body.dock-closed .bottom-area .control-panel{
+ opacity:0;visibility:hidden;pointer-events:none;transform:translateY(16px) scale(.96);
+ height:0;padding:0;margin:0;border:0;overflow:hidden;
+}
+body.dock-closed .dock-handle{margin-bottom:4px;background:#fff8dc}
+.restore-ui{
+ position:fixed;top:calc(max(12px,env(safe-area-inset-top)) + 4px);
+ right:max(12px,env(safe-area-inset-right));z-index:12;
+ display:none;border:1px solid #f3dab1;border-radius:13px;
+ background:#fff7e8dd;color:#375a67;font-weight:900;font-size:12px;
+ padding:11px 15px;box-shadow:0 4px 14px #003a5769;
+ backdrop-filter:blur(9px);
+}
+body.map-only .topbar,
+body.map-only .scoreboard,
+body.map-only .guide-chip,
+body.map-only .bottom-area,
+body.map-only .camera-controls,
+body.map-only .markers{opacity:0;visibility:hidden;pointer-events:none}
+body.map-only .restore-ui{display:block}
+body.map-only .vignette{background:linear-gradient(180deg,#04324d32,transparent 24%,transparent 78%,#02385238)}
+.island-label.offscreen{opacity:0;visibility:hidden}
+.island-label{transition:opacity .18s,filter .2s,scale .2s,visibility .18s}
+@media(max-width:420px){
+ .camera-controls{right:8px;top:48%}
+ .camera-btn{width:39px;height:39px;font-size:23px;border-radius:12px}
+ .dock-handle{font-size:11px;margin-bottom:6px}
+}
+@media(max-height:680px){.camera-controls{top:44%}.camera-btn{width:35px;height:35px}}
+@media(prefers-reduced-motion:reduce){
+ .bottom-area .control-panel,.camera-btn,.island-label{transition:none!important}
+}
