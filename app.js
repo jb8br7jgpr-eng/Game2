@@ -461,6 +461,211 @@ function mapOnly(value){
  $("view-only").setAttribute("aria-pressed",String(value));
  $("restore-ui").setAttribute("aria-hidden",String(!value));
 }
+
+// Online matches are server-authoritative. This client never rolls or grants
+// resources locally when a two-phone session is connected.
+function onlineNotice(message=""){$("online-error").textContent=message}
+function onlineForm(mode){
+ $("online-create-form").hidden=mode!=="create";
+ $("online-join-form").hidden=mode!=="join";
+ $("online-mode-create").classList.toggle("chosen",mode==="create");
+ $("online-mode-join").classList.toggle("chosen",mode==="join");
+ $("online-setup").hidden=false;
+ $("online-room").hidden=true;
+ onlineNotice();
+}
+function showOnlineLobby(mode="create"){
+ $("online-lobby").hidden=false;
+ onlineForm(mode);
+}
+function paintOnlineRoom(room){
+ $("online-lobby").hidden=false;
+ $("online-setup").hidden=true;
+ $("online-room").hidden=false;
+ $("online-room-code").textContent=room.code;
+ $("online-player-0").textContent=room.names[0]||"En attente";
+ $("online-player-1").textContent=room.names[1]||"En attente du capitaine";
+ $("online-room-status").textContent=room.status==="ready"?
+    (room.host?"Deux capitaines présents ! Lance la partie quand tu veux.":"Les deux joueurs sont là. L'hôte va lancer la partie.") :
+    "En attente du deuxième capitaine… Partage le code ou le lien.";
+ $("online-launch").hidden=!room.host||room.status!=="ready";
+}
+async function onlineOpponentEvent(event){
+ if(!event||dialog.classList.contains("active")||locked)return;
+ if(event.type==="roll"&&Array.isArray(event.dice)){
+  modal({icon:"🎲",title:"Le destin des marées",text:"Le tirage au sort vient d'avoir lieu !",special:'<div id="dice-stage"></div>',buttons:[]});
+  await animateDice($("dice-stage"),event.dice,[0,1],state.players.map(p=>p.name));
+  dialogText.textContent=name(event.winner)+" choisit son île en premier.";
+  revealDiceButton("Continuer",()=>{});
+ }else if(event.type==="battle"){
+  const battle=event;
+  modal({icon:"⚔️",title:"Bataille de "+state.islands[event.to].name,
+   text:name(event.attacker)+" contre "+name(event.defender)+" : les dés sont lancés !",
+   special:'<div id="dice-stage"></div><div class="battle-scores" id="battle-scores"></div>',buttons:[]});
+  await animateDice($("dice-stage"),[battle.attackerDice,battle.defenderDice],
+   [battle.attacker,battle.defender],state.players.map(p=>p.name));
+  dialogTitle.textContent=battle.win?"Victoire de "+name(battle.attacker)+" !":"Attaque repoussée !";
+  dialogText.textContent=battle.win?"L'île change de camp.":"Les défenseurs ont tenu bon.";
+  $("battle-scores").textContent=name(battle.attacker)+" : "+battle.attackerTotal+" · "+name(battle.defender)+" : "+battle.defenderTotal;
+  revealDiceButton("Continuer",()=>{
+   if(state.stage==="retreat"&&mySeat()===1-state.current)pickRefuge();
+   else if(state.stage==="ended")showEnding();
+  });
+ }else if(["colonize","expedition","treasure"].includes(event.type)){
+  const success=event.success;
+  toast((success?"🏝️ Expédition réussie : ":"🌧️ Expédition échouée : ")+state.islands[event.island]?.name);
+ }else if(event.type==="turn"){
+  modal({icon:event.player===0?"☾":"☀",title:"À "+name(event.player)+" de jouer !",
+   text:event.player===mySeat()?"C'est ton tour de conquérir l'archipel !":"L'adversaire réfléchit à son prochain mouvement.",
+   buttons:[{label:"Continuer"}]});
+ }else if(event.type==="chosen"){
+  toast("🏝️ "+name(event.player)+" prend "+state.islands[event.island].name);
+ }else if(event.type==="retreat"){
+  toast("⛵ "+name(event.player)+" se replie sur "+state.islands[event.to].name);
+ }else if(event.type==="ship"||event.type==="build"){
+  toast("⚒️ "+name(event.player??state.current)+" a amélioré son territoire !");
+ }else if(event.type==="end"){
+  showEnding();
+ }
+}
+function receiveOnlineRoom(room,self=false){
+ if(!online)return;
+ if(onlineRoom&&room.id!==onlineRoom.id)return;
+ const previous=onlineRoom,prior=state,oldStage=previous?.game?.stage;
+ if(previous&&Number(room.version)<Number(previous.version))return;
+ onlineRoom=room;
+ online.lastRoom=room;
+ if(room.game){
+  const first=!previous?.game;
+  state=room.game;
+  if(first){
+   $("welcome").hidden=true;$("online-lobby").hidden=true;
+   document.body.classList.remove("in-lobby");
+   dialog.classList.remove("active");
+   board.rebuild(state);
+  }else board.sync(state);
+  if(first||state.stage==="play"&&(prior?.current!==state.current||oldStage!=="play")){
+   board.viewPlayer(state.current,1.12);
+  }
+  if(state.stage==="retreat"&&mySeat()===1-state.current&&!self&&
+   previous?.game?.stage!=="retreat"){
+   // Never force the defender to use controls belonging to the attacker.
+   board.showRetreatOptions(refugeOptions(state),mySeat());
+  }else if(state.stage!=="retreat"){
+   board.showRetreatOptions([]);
+  }
+  updateHud();
+  if(!self&&previous&&Number(room.version)>Number(previous.version)){
+   onlineOpponentEvent(room.lastEvent).catch(e=>console.warn("Animation multijoueur",e));
+  }
+ }else{
+  paintOnlineRoom(room);
+ }
+}
+async function onlineAction(action,args={}){
+ if(!isOnline())throw Error("Salon en ligne introuvable.");
+ if(onlineBusy)throw Error("Action en cours de synchronisation.");
+ onlineBusy=true;
+ try{
+  const result=await online.act(action,args,onlineRoom.version);
+  receiveOnlineRoom(result.room,true);
+  return result.event;
+ }catch(error){
+  // A stale optimistic state must never grant an action.
+  if(String(error.message).includes("évolué")){
+   const latest=await online.get();
+   receiveOnlineRoom(latest,true);
+  }
+  throw error;
+ }finally{onlineBusy=false}
+}
+function beginOnlineWatch(client,room){
+ if(online&&online!==client)online.dispose();
+ online=client;
+ receiveOnlineRoom(room,true);
+ online.watch(next=>receiveOnlineRoom(next,false),e=>{
+  if(!$("online-lobby").hidden)onlineNotice("Reconnexion en cours : "+e.message);
+ });
+}
+async function createOnline(e){
+ e.preventDefault();
+ const btn=$("online-create-form").querySelector("button[type=submit]");
+ if(btn.disabled)return;
+ btn.disabled=true;onlineNotice("Création du salon…");
+ const client=new OnlineClient();
+ try{
+  const room=await client.create($("online-create-name").value.trim());
+  beginOnlineWatch(client,room);
+  onlineNotice("");
+ }catch(err){onlineNotice(err.message);client.dispose()}
+ finally{btn.disabled=false}
+}
+async function joinOnline(e){
+ e.preventDefault();
+ const btn=$("online-join-form").querySelector("button[type=submit]");
+ if(btn.disabled)return;
+ btn.disabled=true;onlineNotice("Connexion au salon…");
+ const client=new OnlineClient();
+ try{
+  const room=await client.join($("online-join-code").value.trim(),
+   $("online-join-name").value.trim());
+  beginOnlineWatch(client,room);
+  onlineNotice("");
+ }catch(err){onlineNotice(err.message);client.dispose()}
+ finally{btn.disabled=false}
+}
+async function resumeOnline(){
+ const saved=OnlineClient.restore();
+ const invitation=new URLSearchParams(location.search).get("room");
+ if(!saved){
+  if(invitation){
+   $("online-join-code").value=invitation.trim().toUpperCase();
+   showOnlineLobby("join");
+  }
+  return;
+ }
+ const client=new OnlineClient();client.session=saved;
+ try{
+  const room=await client.get();
+  beginOnlineWatch(client,room);
+ }catch(e){
+  // Keep the reconnect token in case this is a temporary loss of network.
+  client.dispose();
+  if(invitation){
+   $("online-join-code").value=invitation.trim().toUpperCase();
+   showOnlineLobby("join");
+  }
+ }
+}
+$("open-online").addEventListener("click",()=>showOnlineLobby("create"));
+$("online-mode-create").addEventListener("click",()=>onlineForm("create"));
+$("online-mode-join").addEventListener("click",()=>onlineForm("join"));
+$("online-create-form").addEventListener("submit",createOnline);
+$("online-join-form").addEventListener("submit",joinOnline);
+$("online-launch").addEventListener("click",async()=>{
+ if(onlineBusy)return;
+ $("online-launch").disabled=true;
+ onlineNotice("Préparation de l'archipel…");
+ try{await onlineAction("start");onlineNotice("")}
+ catch(e){onlineNotice(e.message)}finally{$("online-launch").disabled=false}
+});
+$("online-close").addEventListener("click",()=>{
+ if(online){online.dispose();online.clear();online=null;onlineRoom=null}
+ $("online-lobby").hidden=true;
+ $("welcome").hidden=false;document.body.classList.add("in-lobby");
+ dialog.classList.remove("active");
+});
+$("online-copy").addEventListener("click",async()=>{
+ if(!onlineRoom)return;
+ try{await navigator.clipboard.writeText(onlineRoom.code);onlineNotice("Code copié !")}
+ catch{onlineNotice("Code à partager : "+onlineRoom.code)}
+});
+$("online-share").addEventListener("click",async()=>{
+ if(!onlineRoom)return;
+ try{await navigator.clipboard.writeText(shareUrl(onlineRoom.code));onlineNotice("Lien d'invitation copié !")}
+ catch{onlineNotice("Partage ce lien : "+shareUrl(onlineRoom.code))}
+});
+
 $("welcome-form").addEventListener("submit",beginAdventure);
 for(const input of [$("player-name-0"),$("player-name-1")]){
  input.addEventListener("input",()=>input.setCustomValidity(""));
@@ -482,6 +687,7 @@ document.addEventListener("keydown",e=>{
 let board;
 try{
  board=new Board3D($("world"),onIsland);reset();
+  resumeOnline().catch(e=>console.warn("Reconnexion multijoueur",e));
  // Development-only browser hooks: never exposed on the deployed github.io host.
  if(location.hostname==="127.0.0.1"||location.hostname==="localhost"){
   window.__ARCHIPEL_TEST={getState:()=>state,refresh,reset,beginAdventure,showAttackPreview,showColonizationPreview,doColonize,pickRefuge,confirmRetreat,doRetreat,getBoard:()=>board,openIslandPicker,pickStartingIsland};
