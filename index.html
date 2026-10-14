@@ -4,20 +4,26 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#067e9e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="ARCHIPEL — Jeu de conquête tropical miniature en 3D, Vélyra contre Auréon.">
-<title>ARCHIPEL — Les royaumes des marées</title><link rel="stylesheet" href="./styles.css?v=20261014-02">
+<title>ARCHIPEL — Les royaumes des marées</title><link rel="stylesheet" href="./styles.css?v=20261014-03">
 </head>
 <body>
 <canvas id="world" role="img" aria-label="Plateau miniature 3D de dix îles tropicales"></canvas>
 <div class="vignette" aria-hidden="true"></div><div id="markers" class="markers" aria-label="Noms et ressources des îles"></div>
-<header class="topbar"><div class="logo"><div class="logo-emblem">✧</div><div><div class="logo-name">ARCHIPEL</div><div class="logo-caption">Les royaumes des marées</div></div></div><div class="top-right"><span class="round-badge" id="round">PRÉPARATION</span><button class="icon-btn" id="help" aria-label="Règles du jeu">?</button><button class="icon-btn" id="restart" aria-label="Nouvelle partie">↻</button></div></header>
+<header class="topbar"><div class="logo"><div class="logo-emblem">✧</div><div><div class="logo-name">ARCHIPEL</div><div class="logo-caption">Les royaumes des marées</div></div></div><div class="top-right"><span class="round-badge" id="round">PRÉPARATION</span><button class="icon-btn" id="view-only" title="Mode carte seule" aria-label="Masquer l’interface">◫</button><button class="icon-btn" id="help" aria-label="Règles du jeu">?</button><button class="icon-btn" id="restart" aria-label="Nouvelle partie">↻</button></div></header>
 <section class="scoreboard" aria-label="Factions">
  <div class="team" id="team-0"><div class="team-heading"><span class="team-crest">☾</span> VÉLYRA</div><div class="team-count">0 îles • 0 pts</div><div class="team-line"><span>🌲 <strong class="team-wood">0</strong>/40</span><span>🪨 <strong class="team-stone">0</strong>/40</span><span class="team-ship">⛵ 1 ⚔ 0</span></div></div>
  <div class="team orange" id="team-1"><div class="team-heading"><span class="team-crest">☀</span> AURÉON</div><div class="team-count">0 îles • 0 pts</div><div class="team-line"><span>🌲 <strong class="team-wood">0</strong>/40</span><span>🪨 <strong class="team-stone">0</strong>/40</span><span class="team-ship">⛵ 1 ⚔ 0</span></div></div>
 </section>
+<nav class="camera-controls" id="camera-controls" aria-label="Contrôles de la caméra 3D">
+ <button class="camera-btn" id="zoom-in" title="Zoom avant" aria-label="Zoom avant">＋</button>
+ <button class="camera-btn" id="zoom-out" title="Zoom arrière" aria-label="Zoom arrière">−</button>
+ <button class="camera-btn center" id="recenter" title="Vue d’ensemble" aria-label="Recentrer la carte">⌖</button>
+</nav>
+<button class="restore-ui" id="restore-ui" aria-label="Réafficher l’interface">☰ &nbsp; Menu</button>
 <div class="guide-chip" id="guide">Touchez une île pour commencer</div>
-<main class="bottom-area"><section class="control-panel"><div class="panel-head"><div><div class="stage-caption">VOTRE AVENTURE</div><div class="stage-name" id="stage-name">Bienvenue</div><div class="status-line" id="status-line"></div></div><div class="detail" id="island-detail"><span class="tile-name">ARCHIPEL</span></div></div><div class="panel-guide" id="guide-text">Navigation, construction et conquête</div><div class="actions" id="actions"><button class="action hero" disabled>Chargement 3D…</button></div></section></main>
+<main class="bottom-area"><button id="toggle-actions" class="dock-handle" aria-controls="action-dock" aria-expanded="true" aria-label="Masquer le menu d’actions">⌄ &nbsp; Masquer les actions</button><section class="control-panel" id="action-dock"><div class="panel-head"><div><div class="stage-caption">VOTRE AVENTURE</div><div class="stage-name" id="stage-name">Bienvenue</div><div class="status-line" id="status-line"></div></div><div class="detail" id="island-detail"><span class="tile-name">ARCHIPEL</span></div></div><div class="panel-guide" id="guide-text">Navigation, construction et conquête</div><div class="actions" id="actions"><button class="action hero" disabled>Chargement 3D…</button></div></section></main>
 <div class="overlay" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-card"><div class="dialog-icon" id="dialog-icon">🏝️</div><h2 class="dialog-title" id="dialog-title">Bienvenue</h2><p class="dialog-text" id="dialog-text"></p><div id="dialog-special"></div><div class="dialog-buttons" id="dialog-buttons"></div></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div><div id="fallback" class="fallback hidden"></div>
-<script type="module" src="./app.js?v=20261014-02"></script>
+<script type="module" src="./app.js?v=20261014-03"></script>
 <script>setTimeout(()=>{const p=document.getElementById("fallback");if(p&&document.querySelector("#actions .hero:disabled")){p.classList.remove("hidden");p.innerHTML="<h2>Rendu 3D indisponible</h2><p>Vérifie ta connexion, puis recharge ARCHIPEL dans Safari ou Chrome récent.</p>";}},18000);</script>
 </body></html>
