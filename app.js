@@ -2,8 +2,8 @@ import {
  FACTIONS,newGame,connected,owned,score,rollForStart,chooseStart,
  beginTurn,canNavigate,canAttack,navigate,colonize,upgradeShip,upgradeIsland,
  attack,refugeOptions,retreat,finishTurn
-} from "./game.js";
-import {Board3D} from "./board3d.js";
+} from "./game.js?v=20261014-03";
+import {Board3D} from "./board3d.js?v=20261014-03";
 const $=id=>document.getElementById(id);
 let state=newGame(),locked=false;
 const ICONS={Vélyra:"☾",Auréon:"☀"};
@@ -65,8 +65,8 @@ function updateHud(){
  const tileInfo=state.selected===null?null:state.islands[state.selected];
  $("island-detail").classList.toggle("empty",!tileInfo);
  $("island-detail").innerHTML=tileInfo?
-  '<div class="tileInfo-name">'+escapeHTML(tileInfo.name)+'</div><span class="tileInfo-owner">'+(tileInfo.owner===null?"Île neutre":name(tileInfo.owner))+(tileInfo.owner===null?"":" · "+["Village","Ville","Ville fortifiée"][tileInfo.level])+'</span><span class="tileInfo-income">🌲 +'+tileInfo.wood+' &nbsp; 🪨 +'+tileInfo.stone+'</span>'
-  :'<span class="tileInfo-name">L’archipel</span><span class="tileInfo-owner">10 îles à explorer</span>';
+  '<div class="tile-name">'+escapeHTML(tileInfo.name)+'</div><span class="tile-owner">'+(tileInfo.owner===null?"Île neutre":name(tileInfo.owner))+(tileInfo.owner===null?"":" · "+["Village","Ville","Ville fortifiée"][tileInfo.level])+'</span><span class="tile-income">🌲 +'+tileInfo.wood+' &nbsp; 🪨 +'+tileInfo.stone+'</span>'
+  :'<span class="tile-name">L’archipel</span><span class="tile-owner">10 îles à explorer</span>';
  const actions=$("actions");actions.replaceChildren();
  if(stage==="roll"){actions.appendChild(button("🎲 &nbsp; Lancer les dés",doRoll,true,"hero"));return}
  if(stage==="draft"){actions.appendChild(button("🏝️ &nbsp; Choisir une île",()=>toast("Touchez directement une île libre sur la carte."),true,"soft"));return}
@@ -86,7 +86,7 @@ function escapeHTML(s){return s.replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",
 function refresh(){board.sync(state);updateHud()}
 function reset(){
  state=newGame();locked=false;board.rebuild(state);refresh();
- modal({icon:"🏝️",title:"Bienvenue dans ARCHIPEL",text:"Deux factions rivales, dix îles et une mer pleine de surprises. Explore et conquiers ton royaume miniature.",buttons:[{label:"Découvrir l'archipel",click:()=>{}}]});
+ modal({icon:"🏝️",title:"Bienvenue dans ARCHIPEL",text:"Deux factions rivales, dix îles et une mer pleine de surprises. Pince pour zoomer, glisse pour explorer, ou masque l’interface pour admirer ton archipel.",buttons:[{label:"Découvrir l'archipel",click:()=>{}}]});
 }
 async function onIsland(id){
  if(locked)return;
@@ -202,7 +202,34 @@ function showEnding(){
 }
 $("restart").addEventListener("click",()=>modal({icon:"↻",title:"Nouvelle partie ?",text:"Recommencer génère dix nouvelles positions et ressources. La partie actuelle sera perdue.",
  buttons:[{label:"Annuler",secondary:true},{label:"Recommencer",click:reset}]}));
-$("help").addEventListener("click",()=>modal({icon:"📜",title:"Comment jouer ?",text:"Chaque faction contrôle un navire. Chaque île produit 1 à 3 bois et 1 à 3 pierres par tour. Touchez une île reliée pour y naviguer. Pour attaquer une île ennemie, touchez-la puis choisissez Attaquer. Une action principale par tour. Navire : 10 puis 20 bois. Ville : 10 puis 20 pierres. 7 îles = victoire immédiate. Sinon score après 22 tours chacun.",buttons:[{label:"C'est compris"}]}));
+$("help").addEventListener("click",()=>modal({icon:"📜",title:"Comment jouer ?",text:"Caméra : pince pour zoomer, glisse sur la mer pour explorer, utilise ⌖ pour recentrer et ◫ pour voir uniquement la carte. Le menu d’actions peut aussi être masqué et réaffiché. Chaque faction contrôle un navire. Chaque île produit 1 à 3 bois et 1 à 3 pierres par tour. Touchez une île reliée pour y naviguer. Pour attaquer une île ennemie, touchez-la puis choisissez Attaquer. Une action principale par tour. Navire : 10 puis 20 bois. Ville : 10 puis 20 pierres. 7 îles = victoire immédiate. Sinon score après 22 tours chacun.",buttons:[{label:"C'est compris"}]}));
+
+function hideOrShowActions(){
+ const collapsed=document.body.classList.toggle("dock-closed");
+ const b=$("toggle-actions");
+ b.setAttribute("aria-expanded",String(!collapsed));
+ b.setAttribute("aria-label",collapsed?"Afficher le menu d’actions":"Masquer le menu d’actions");
+ b.textContent=collapsed?"⌃  Afficher les actions":"⌄  Masquer les actions";
+}
+function mapOnly(value){
+ document.body.classList.toggle("map-only",value);
+ $("view-only").setAttribute("aria-pressed",String(value));
+ $("restore-ui").setAttribute("aria-hidden",String(!value));
+}
+$("toggle-actions").addEventListener("click",hideOrShowActions);
+$("view-only").addEventListener("click",()=>mapOnly(true));
+$("restore-ui").addEventListener("click",()=>mapOnly(false));
+$("zoom-in").addEventListener("click",()=>board?.zoomBy(1.30));
+$("zoom-out").addEventListener("click",()=>board?.zoomBy(.77));
+$("recenter").addEventListener("click",()=>board?.centerView());
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape"&&document.body.classList.contains("map-only"))mapOnly(false);
+ if(e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;
+ if(e.key==="+"||e.key==="=")board?.zoomBy(1.2);
+ else if(e.key==="-")board?.zoomBy(.83);
+ else if(e.key.toLowerCase()==="r"&&!e.ctrlKey&&!e.metaKey)board?.centerView();
+});
+
 let board;
 try{
  board=new Board3D($("world"),onIsland);reset();
