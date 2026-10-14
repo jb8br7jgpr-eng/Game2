@@ -116,7 +116,7 @@ def radial_surface(asset,kind,rad0,rad1,nrings=9,n=96):
             v.append((real*math.cos(a),y,real*math.sin(a)))
     for j in range(nrings):
         for i in range(n):
-            a=j*n+i,b=j*n+(i+1)%n,c=(j+1)*n+i,d=(j+1)*n+(i+1)%n
+            a,b,c,d=j*n+i,j*n+(i+1)%n,(j+1)*n+i,(j+1)*n+(i+1)%n
             faces.extend(((a,b,c),(b,d,c)))
     asset.mesh(kind,v,faces)
 def cliff(asset):
@@ -224,7 +224,7 @@ def build_island():
     faces=[]
     for ring in range(2):
         for k in range(n):
-            i=ring*n+k,j=ring*n+(k+1)%n
+            i,j=ring*n+k,ring*n+(k+1)%n
             faces.extend(((i,j,i+n),(j,j+n,i+n)))
     a.mesh("sand",uv,faces)
     # Rock masses at coastline; individual faceted geometry with textured normals.
@@ -283,7 +283,7 @@ def hull(asset):
             vertices.append((math.sin(ang)*w,.27+math.cos(ang)*.225,z))
     for i in range(len(stations)-1):
         for j in range(N):
-            a=i*N+j,b=i*N+(j+1)%N,c=(i+1)*N+j,d=(i+1)*N+(j+1)%N
+            a,b,c,d=i*N+j,i*N+(j+1)%N,(i+1)*N+j,(i+1)*N+(j+1)%N
             faces.extend(((a,b,c),(b,d,c)))
     asset.mesh("wood",vertices,faces)
 def build_ship():
