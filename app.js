@@ -341,11 +341,11 @@ function showAttackPreview(id){
  const outlook=p.winPercent>=60?"Avantage offensif":p.winPercent<=35?"Attaque risquée":"Forces équilibrées";
  const details='<div class="attack-forecast">'+
  '<div class="forecast-teams">'+
- '<section class="forecast-side faction-'+p.attacker+'"><div class="forecast-label">⚔️ ATTAQUANT</div><b>'+name(p.attacker)+'</b>'+
+ '<section class="forecast-side faction-'+p.attacker+'"><div class="forecast-label">⚔️ ATTAQUANT</div><b>'+escapeHTML(name(p.attacker))+'</b>'+
  '<div class="forecast-equation"><span>🎲 Dé 1–6</span><strong>+ '+p.shipBonus+'</strong></div>'+
  '<div class="forecast-caption">⛵ Navire niveau '+p.shipLevel+' → bonus +'+p.shipBonus+'</div>'+
  '<div class="forecast-total">Force possible <b>'+p.attackerRange[0]+'–'+p.attackerRange[1]+'</b></div></section>'+
- '<section class="forecast-side faction-'+p.defender+'"><div class="forecast-label">🛡️ DÉFENSEUR</div><b>'+name(p.defender)+'</b>'+
+ '<section class="forecast-side faction-'+p.defender+'"><div class="forecast-label">🛡️ DÉFENSEUR</div><b>'+escapeHTML(name(p.defender))+'</b>'+
  '<div class="forecast-equation"><span>🎲 Dé 1–6</span><strong>+ '+p.defenseBonus+'</strong></div>'+
  '<div class="forecast-caption">🏰 '+["Village","Ville","Ville fortifiée"][p.defenseLevel]+' → +'+p.defenseLevel+'</div>'+
  '<div class="forecast-caption">⛵ Bateau défensif : '+(p.defenderShipHere?'+1 présent':'0 absent')+'</div>'+
@@ -382,7 +382,7 @@ async function playBattle(id){
   dialogIcon.textContent=result.win?"🏆":"🛡️";
   dialogTitle.textContent=result.win?"Victoire de "+name(result.attacker)+" !":"La défense tient bon !";
   dialogText.textContent=notes;
-  $("battle-scores").innerHTML='<span class="battle-attacker">'+name(result.attacker)+": "+result.attackerDice+" + "+(a-result.attackerDice)+" = <b>"+a+'</b></span><span class="battle-defender">'+name(result.defender)+": "+result.defenderDice+" + "+(d-result.defenderDice)+" = <b>"+d+"</b></span>";
+  $("battle-scores").innerHTML='<span class="battle-attacker">'+escapeHTML(name(result.attacker))+": "+result.attackerDice+" + "+(a-result.attackerDice)+" = <b>"+a+'</b></span><span class="battle-defender">'+name(result.defender)+": "+result.defenderDice+" + "+(d-result.defenderDice)+" = <b>"+d+"</b></span>";
   revealDiceButton(result.win?"Continuer":"Reprendre la mer",()=>{
    if(result.domination)showEnding();
    else if(state.stage==="retreat")pickRefuge();
