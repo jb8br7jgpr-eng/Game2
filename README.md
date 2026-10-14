@@ -2,6 +2,16 @@
 
 **Prototype 3D interactif 0.7** du jeu de plateau miniature imaginé ensemble.
 
+## Atelier graphique V0.8.1 — Hero Island
+
+**Prototype interactif séparé : https://jb8br7jgpr-eng.github.io/Game2/prototype-v08.html**
+
+Cette expérimentation se concentre sur une seule île tropicale, une cabane, un ponton et un petit voilier. Les modèles sont désormais exportés en véritables **fichiers 3D GLB** plutôt que reconstruits au chargement dans JavaScript. Un générateur Python (`scripts/build_hero_assets.py`) préfabrique les géométries sculptées, les textures colorées et les matériaux PBR (dont quelques textures normales) avant le déploiement GitHub Pages. Une vérification (`scripts/check_hero_assets.py`) contrôle les maillages et leurs matériaux. Les GLB sont générés à la compilation du site, puis servis depuis `assets/`.
+
+Ce nouveau pipeline crée des matériaux et modèles plus travaillés mais **n'équivaut pas encore** à des sculptures d'artiste faites sous Blender. Pour atteindre complètement le rendu de l'image de référence, il faudra remplacer progressivement ces assets techniques par des modèles et textures d'artiste, et faire évoluer le shader d'eau et la mise en lumière. La V0.7 du jeu complet reste indépendante.
+
+Fonctions du prototype : rotation et zoom tactiles, lumière du jour / du soir, petit trajet animé du bateau, sillage, interface escamotable et vue centrée adaptée à l'iPhone.
+
 ## Jouer
 
 **https://jb8br7jgpr-eng.github.io/Game2/**
