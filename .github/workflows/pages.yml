@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '22'
       - name: Tester les règles et le JavaScript
-        run: node tests/smoke.mjs
+        run: npm test
   deploy:
     environment:
       name: github-pages
