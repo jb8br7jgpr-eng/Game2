@@ -7,7 +7,7 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const V=(x,y,z)=>new THREE.Vector3(x,y,z);
 let scene,renderer,camera,visuals,water;
 let sun,hemi,elapsed=0,last=0;
-const state={yaw:.40,pitch:.58,distance:31,center:V(-1,.5,.3),fingers:new Map(),sailing:null,evening:false};
+const state={yaw:.40,pitch:.58,distance:innerWidth<700?39:31,center:V(innerWidth<700?-2.5:-1,.5,.3),fingers:new Map(),sailing:null,evening:false};
 const wake=[];
 const vs=[
 "precision highp float;",
@@ -151,7 +151,7 @@ function bind(){
  $("zoom-plus").addEventListener("click",()=>zoom(.84));
  $("zoom-minus").addEventListener("click",()=>zoom(1.17));
  $("camera-reset").addEventListener("click",()=>{
-  state.yaw=.4;state.pitch=.58;state.distance=31;state.center.set(-1,.5,.3);setCamera();
+  state.yaw=.4;state.pitch=.58;state.distance=innerWidth<700?39:31;state.center.set(innerWidth<700?-2.5:-1,.5,.3);setCamera();
  });
  $("sail").addEventListener("click",sail);
  $("light").addEventListener("click",switchLighting);
