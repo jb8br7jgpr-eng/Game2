@@ -1,5 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-import {connected} from "./game.js?v=20261014-07";
+import {connected} from "./game.js?v=20261014-08";
 import {islandMiniature,shipMiniature} from "./art-v06.js";
 import {finishIsland,finishShip} from "./art-v07.js";
 import {dockPosition} from "./docks-v06.js";
@@ -121,6 +121,12 @@ export class Board3D{
    marker.classList.toggle("active",this.currentGame.selected===i);
    marker.classList.toggle("violet",tile.owner===0);
    marker.classList.toggle("orange",tile.owner===1);
+   // Faction owner badge uses the exact ownership index displayed in the 3D scene.
+   const ownerTag=tile.owner===null?"":(tile.owner===0?"☾ ":"☀ ")+this.currentGame.players[tile.owner].name;
+   if(marker.dataset.owner!==ownerTag){
+    marker.dataset.owner=ownerTag;
+    marker.querySelector(".island-faction").textContent=ownerTag;
+   }
    marker.classList.toggle("offscreen",pt.x < -1.07 || pt.x > 1.07 || pt.y < -1.07 || pt.y > 1.07);
   });
  }
@@ -157,6 +163,17 @@ export class Board3D{
   const tile=this.currentGame?.islands[id];if(!tile)return;
   this.followPoint=null;
   this.center.set(tile.x,0,tile.z);
+  this.scale=THREE.MathUtils.clamp(zoom,.17,3.45);
+  this.updateCamera();this.resize();
+ }
+
+ viewPlayer(player,zoom=1.12){
+  // A named player's own vessel/port is always the camera target, never the opponent.
+  const p=this.currentGame?.players[player];
+  if(!p||p.boat===null)return this.centerView();
+  const island=this.currentGame.islands[p.boat],boat=this.boatTarget(player,p.boat);
+  this.followPoint=null;
+  this.center.set(island.x+(boat.x-island.x)*.33,0,island.z+(boat.z-island.z)*.33);
   this.scale=THREE.MathUtils.clamp(zoom,.17,3.45);
   this.updateCamera();this.resize();
  }
@@ -352,7 +369,7 @@ export class Board3D{
    game.islands.forEach(t=>{
     const marker=document.createElement("div");
     marker.className="island-label";
-    marker.innerHTML='<b>'+t.name+'</b><span>🌲 '+t.wood+'&nbsp; 🪨 '+t.stone+'</span>';
+    marker.innerHTML='<b>'+t.name+'</b><small class="island-faction"></small><span>🌲 '+t.wood+'&nbsp; 🪨 '+t.stone+'</span>';
     marker.setAttribute("aria-label",t.name+", "+t.wood+" bois et "+t.stone+" pierres par tour");
     marker.addEventListener("click",()=>{
      if(this.currentGame?.stage==="retreat"&&this.retreatTargets.includes(t.id))this.onIsland(t.id);
