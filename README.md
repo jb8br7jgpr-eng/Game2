@@ -100,7 +100,20 @@ Aucune configuration Supabase n'est requise **pour le mode local actuel**. Game2
 - **`tests/smoke.mjs`** : tests du moteur de jeu
 - **`tests/browser.mjs`** : test d'interface avec Chromium dans une fenêtre de taille iPhone
 
-À venir : améliorations visuelles après retours utilisateur, animations plus poussées, adaptation finale à l'iPhone et multijoueur en ligne avec serveur indépendant.
+### Mode en ligne — deux téléphones
+
+À l'écran d'accueil, choisir **Jouer à deux en ligne**. Le joueur violet (hôte) crée un salon avec son nom de faction et partage le **code à 8 caractères** ou le lien d'invitation. Le joueur orange rejoint le salon avec son nom, puis l'hôte lance la partie. Chaque téléphone affiche le même archipel, les mêmes dés, les mêmes choix, et bloque les actions hors tour. Le navigateur conserve un jeton privé pour reprendre une partie après rechargement.
+
+Infrastructure autonome **Supabase ARCHIPEL** (Paris, projet `lrmgtnbxujdvswaykyxi`), sans dépendance à OPMercato :
+- `supabase/functions/archipel-online/index.ts` : serveur de jeu à actions validées côté serveur, dés et résultats calculés sur le serveur, accès par jetons aléatoires hachés ;
+- table privée `archipel_rooms`, accès direct depuis les navigateurs interdit par RLS ; écriture concurrente protégée par un numéro de version ;
+- `online.js` : API navigateur, sauvegarde locale du jeton de salon, reconnexion et actualisation régulière ;
+- `tests/online-api.mjs` et `tests/online-browser.mjs` : test d'autorisation des deux sièges et véritable scénario à deux fenêtres iPhone.
+- Lors de changements de règles, redéployer la fonction Edge avec les fichiers `game.js`, `map-v05.js` et `map-v06.js` à jour, car le serveur embarque sa copie du moteur.
+
+Le mode **local** ne nécessite toujours aucune connexion Supabase. Les prototypes graphiques restent indépendants.
+
+À venir : améliorations visuelles après retours utilisateur et animations plus poussées.
 
 Pour lancer en local : `python3 -m http.server 8000`, puis ouvrir http://localhost:8000/ .
 
