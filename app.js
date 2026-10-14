@@ -382,7 +382,7 @@ async function playBattle(id){
   dialogIcon.textContent=result.win?"🏆":"🛡️";
   dialogTitle.textContent=result.win?"Victoire de "+name(result.attacker)+" !":"La défense tient bon !";
   dialogText.textContent=notes;
-  $("battle-scores").innerHTML='<span class="battle-attacker">'+escapeHTML(name(result.attacker))+": "+result.attackerDice+" + "+(a-result.attackerDice)+" = <b>"+a+'</b></span><span class="battle-defender">'+name(result.defender)+": "+result.defenderDice+" + "+(d-result.defenderDice)+" = <b>"+d+"</b></span>";
+  $("battle-scores").innerHTML='<span class="battle-attacker">'+escapeHTML(name(result.attacker))+": "+result.attackerDice+" + "+(a-result.attackerDice)+" = <b>"+a+'</b></span><span class="battle-defender">'+escapeHTML(name(result.defender))+": "+result.defenderDice+" + "+(d-result.defenderDice)+" = <b>"+d+"</b></span>";
   revealDiceButton(result.win?"Continuer":"Reprendre la mer",()=>{
    if(result.domination)showEnding();
    else if(state.stage==="retreat")pickRefuge();
