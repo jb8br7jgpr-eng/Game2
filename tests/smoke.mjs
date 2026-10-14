@@ -1,3 +1,5 @@
+import {MIN_ISLAND_SPACING,ARCHIPEL_FORMS} from "../map-v06.js";
+import {dockPosition,ISLAND_VISUAL_RADIUS} from "../docks-v06.js";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {newGame,makeEdges,owned,score,connected,neighborIds,rollForStart,chooseStart,
@@ -39,6 +41,31 @@ for(let seed=1;seed<=55;seed++){
  }
  assert.ok(map.edges.length>=12&&map.edges.length<=20,"manageable sea lane count, seed "+seed);
 }
+// v0.6: each new archipelago spreads islands further apart and uses 5 shapes.
+assert.equal(ARCHIPEL_FORMS.length,5);
+const shapes=new Set();
+for(let seed=1;seed<=110;seed++){
+ const land=newGame(rng(seed*197));
+ const positions=land.islands;
+ for(let i=0;i<positions.length;i++){
+  const degrees=neighborIds(land,i).length;
+  assert.ok(degrees>=2,"no one-way/dead-end island, seed "+seed);
+  for(let j=i+1;j<positions.length;j++){
+   const d=Math.hypot(positions[i].x-positions[j].x,positions[i].z-positions[j].z);
+   assert.ok(d>=MIN_ISLAND_SPACING-.011,"v0.6 spacing seed "+seed+" islands "+i+" "+j+": "+d);
+  }
+  for(const player of [0,1])for(const level of [1,2,3]){
+   const berth=dockPosition(positions,i,player,level);
+   const clearance=Math.hypot(berth.x-positions[i].x,berth.z-positions[i].z);
+   assert.ok(clearance>=3.49,"boat floats outside the island at all tiers");
+   assert.ok(clearance-ISLAND_VISUAL_RADIUS>1.7,"coast-and-boat bounds never intersect");
+  }
+ }
+ const width=Math.max(...positions.map(p=>p.x))-Math.min(...positions.map(p=>p.x));
+ const height=Math.max(...positions.map(p=>p.z))-Math.min(...positions.map(p=>p.z));
+ shapes.add(Math.round(width/height*5)/5);
+}
+assert.ok(shapes.size>=3,"multiple distinct archipelago silhouettes across new games");
 const roll=rollForStart(s,(()=>{const x=[.92,.04];return()=>x.shift()})());
 assert.equal(roll.winner,0);
 chooseStart(s,0);assert.equal(s.chooser,1);
@@ -108,5 +135,5 @@ const ui=fs.readFileSync(new URL("../app.js",import.meta.url),"utf8");
 assert.ok(html.includes('id="world"')&&html.includes('type="module"'));
 assert.ok(board.includes("WebGLRenderer")&&board.includes("CylinderGeometry")&&board.includes("ShaderMaterial"));
 assert.ok(css.includes("position:fixed")&&css.includes("100dvh"));
-assert.ok(ui.includes("battleMotion")&&ui.includes("board.sail")&&ui.includes("showAttackPreview"));
+assert.ok(ui.includes("battleMotion")&&ui.includes("board.sail")&&ui.includes("showAttackPreview")&&ui.includes("revealTreasure"));
 console.log("PASS: 10 connected randomized 3D islands, start dice and drafting, turn economy, movement, capture, construction, combats, retreat, endgame, fullscreen UI and modules.");
