@@ -1,9 +1,9 @@
 import {
  FACTIONS,newGame,connected,owned,score,rollForStart,chooseStart,
- beginTurn,canNavigate,canAttack,previewAttack,navigate,colonize,upgradeShip,upgradeIsland,
+ beginTurn,canNavigate,canAttack,previewAttack,navigate,colonize,previewColonization,upgradeShip,upgradeIsland,
  attack,refugeOptions,retreat,finishTurn
-} from "./game.js?v=20261014-06f";
-import {Board3D} from "./board3d.js?v=20261014-06f";
+} from "./game.js?v=20261014-07";
+import {Board3D} from "./board3d.js?v=20261014-07";
 import {animateDice} from "./dice-v04.js";
 const $=id=>document.getElementById(id);
 let state=newGame(),locked=false;
@@ -42,7 +42,7 @@ function button(text,func,enabled=true,skin=""){
 }
 function updateHud(){
  const stage=state.stage;
- const acting=stage==="draft"?state.chooser:stage==="play"||stage==="retreat"?state.current:null;
+ const acting=stage==="draft"?state.chooser:stage==="retreat"?1-state.current:stage==="play"?state.current:null;
  document.body.dataset.faction=acting===1?"aureon":acting===0?"velyra":"neutral";
  const steps=$("turn-steps");
  steps.classList.toggle("hidden",stage!=="play");
@@ -56,7 +56,7 @@ function updateHud(){
  }
  $("round").textContent=stage==="play"||stage==="retreat"?"TOUR "+Math.min(22,player().turns+1)+" / 22":stage==="ended"?"PARTIE TERMINÉE":"PRÉPARATION";
  state.players.forEach((p,i)=>{
-  const node=$("team-"+i),active=(stage==="play"&&state.current===i)||(stage==="draft"&&state.chooser===i);
+  const node=$("team-"+i),active=(stage==="play"&&state.current===i)||(stage==="retreat"&&1-state.current===i)||(stage==="draft"&&state.chooser===i);
   node.classList.toggle("active",active);node.classList.toggle("orange",i===1);
   node.querySelector(".team-count").textContent=owned(state,i).length+" îles • "+score(state,i)+" pts";
   node.querySelector(".team-ship").textContent="⛵ "+p.ship+"  ⚔ "+p.wins;
@@ -66,28 +66,28 @@ function updateHud(){
  const caption=$("status-line"),stageName=$("stage-name"),guide=$("guide");
  guide.style.display=stage==="play"||stage==="retreat"||stage==="ended"?"none":"";
  if(stage==="roll"){stageName.textContent="Le choix des îles";caption.textContent="Deux royaumes. Un archipel.";guide.textContent="Lancez les dés pour commencer."}
- if(stage==="draft"){stageName.textContent=name(state.chooser)+" choisit son île";caption.textContent="Exploration ou choix guidé";guide.textContent="Touche une île ou ouvre la liste des 10 territoires."}
+ if(stage==="draft"){stageName.textContent=name(state.chooser)+" choisit son île";caption.textContent="Exploration ou choix guidé";guide.textContent="Touche une île ou compare les ressources et difficultés des 10 territoires."}
  if(stage==="play"){
   const p=player(),tile=currentIsland();
   stageName.textContent=state.actionUsed?"Fin du tour • "+p.name:state.moveUsed?"Action • "+p.name:"Navigation • "+p.name;
   caption.textContent=(state.moveUsed?"⛵ Navigation effectuée":"⛵ 1 déplacement disponible")+"  ·  "+(state.actionUsed?"✓ Action utilisée":"✦ 1 action disponible");
   guide.textContent=state.actionUsed?"Action terminée : passe au joueur suivant.":tile?.owner===null?"Île neutre : colonise-la !":!state.moveUsed?"Navigue vers une île voisine (facultatif), ou agis depuis ton port.":"Sélectionne ton action, puis termine le tour.";
  }
- if(stage==="retreat"){stageName.textContent="Retraite !";caption.textContent="Choisis un refuge pour le défenseur.";guide.textContent="Le navire ne perd aucun niveau."}
+ if(stage==="retreat"){stageName.textContent="Retraite • "+name(1-state.current);caption.textContent="✦ Îles lumineuses = refuges disponibles";guide.textContent="Touche une île surlignée sur la carte, puis confirme le repli."}
  if(stage==="ended"){stageName.textContent=state.winner===null?"Match nul":name(state.winner)+" remporte la partie";caption.textContent="L'archipel attend une revanche.";guide.textContent="Partie terminée."}
  const tileInfo=state.selected===null?null:state.islands[state.selected];
  $("island-detail").classList.toggle("empty",!tileInfo);
  $("island-detail").innerHTML=tileInfo?
-  '<div class="tile-name">'+escapeHTML(tileInfo.name)+'</div><span class="tile-owner">'+(tileInfo.owner===null?"Île neutre":name(tileInfo.owner))+(tileInfo.owner===null?"":" · "+["Village","Ville","Ville fortifiée"][tileInfo.level])+'</span><span class="tile-income">🌲 +'+tileInfo.wood+' &nbsp; 🪨 +'+tileInfo.stone+'</span>'
+  '<div class="tile-name">'+escapeHTML(tileInfo.name)+'</div><span class="tile-owner">'+(tileInfo.owner===null?"Île neutre · difficulté "+tileInfo.difficulty:name(tileInfo.owner)+" · "+["Village","Ville","Ville fortifiée"][tileInfo.level])+'</span><span class="tile-income">🌲 +'+tileInfo.wood+' &nbsp; 🪨 +'+tileInfo.stone+'</span>'
   :'<span class="tile-name">L’archipel</span><span class="tile-owner">10 îles à explorer</span>';
  const actions=$("actions");actions.replaceChildren();
  if(stage==="roll"){actions.appendChild(button("🎲 &nbsp; Lancer les dés",doRoll,true,"hero"));return}
  if(stage==="draft"){actions.appendChild(button("🏝️ &nbsp; Voir les 10 îles",openIslandPicker,true,"hero"));return}
  if(stage==="ended"){actions.appendChild(button("↻ &nbsp; Revanche",reset,true,"hero"));return}
- if(stage==="retreat"){actions.appendChild(button("⛵ &nbsp; Choisir mon refuge",pickRefuge,true,"hero"));return}
+ if(stage==="retreat"){actions.appendChild(button("🗺️ &nbsp; Voir les refuges",pickRefuge,true,"hero"));return}
  const p=player(),tile=currentIsland(),target=state.selected===null?null:state.islands[state.selected];
  if(canAttack(state,state.selected))actions.appendChild(button("⚔️ &nbsp; Évaluer l’attaque",()=>showAttackPreview(state.selected),true,"danger"));
- if(tile.owner===null)actions.appendChild(button("🚩 &nbsp; Coloniser",doColonize,!state.actionUsed,"hero"));
+ if(tile.owner===null){const exp=state.actionUsed?null:previewColonization(state);actions.appendChild(button("🧭 &nbsp; Expédition"+(exp?" • "+exp.successPercent+" %":""),showColonizationPreview,!state.actionUsed,"hero"));}
  if(tile.owner===state.current){
   const shipCost=p.ship===1?10:20,townCost=tile.level===0?10:20;
   actions.appendChild(button("⛵ &nbsp; Navire <small>"+shipCost+" 🌲</small>",doShip,!state.actionUsed&&p.ship<3&&p.wood>=shipCost,"violet"));
@@ -125,7 +125,7 @@ function openIslandPicker(){
  const cards=candidates.map(tile=>
   '<div class="draft-island-card" data-island="'+tile.id+'">'+
   '<div class="draft-island-name">'+escapeHTML(tile.name)+'</div>'+
-  '<div class="draft-island-resources">🌲 '+tile.wood+' bois / tour · 🪨 '+tile.stone+' pierre / tour</div>'+
+  '<div class="draft-island-resources">🌲 '+tile.wood+' bois · 🪨 '+tile.stone+' pierre · 🧭 difficulté '+tile.difficulty+'</div>'+
   '<div class="draft-island-controls">'+
   '<button class="draft-view" data-island="'+tile.id+'" type="button">🔎 Observer</button>'+
   '<button class="draft-choose" data-island="'+tile.id+'" type="button">Choisir cette île</button>'+
@@ -150,7 +150,7 @@ async function onIsland(id){
  const t=state.islands[id];
  if(state.stage==="roll"){toast("Commence par lancer les dés.");return}
  if(state.stage==="draft"){pickStartingIsland(id);return;}
- if(state.stage==="retreat"){if(refugeOptions(state).includes(id)){doRetreat(id)}else toast("Choisis une île alliée ou un refuge neutre.");return}
+ if(state.stage==="retreat"){if(refugeOptions(state).includes(id)){confirmRetreat(id)}else toast("Choisis une île lumineuse pour ton refuge.");return}
  if(state.stage!=="play")return;
  if(id===player().boat){state.selected=id;refresh();return}
  if(canAttack(state,id)){
@@ -188,17 +188,45 @@ async function doRoll(){
  }catch(e){toast(e.message)}finally{locked=false}
 }
 
+function showColonizationPreview(){
+ if(locked)return;
+ let info;try{info=previewColonization(state)}catch(ex){toast(ex.message);return}
+ const tile=state.islands[info.island],risk=info.successPercent>=65?"Expédition favorable":info.successPercent>=45?"Défi équilibré":"Île difficile";
+ const special='<div class="expedition-preview">'+
+  '<div class="expedition-terrain"><span>🏝️ '+tile.name+'</span><strong>Difficulté '+info.difficulty+'</strong></div>'+
+  '<div class="expedition-equation"><span>🎲 Dé 1–6</span><span>+ '+info.bonus+' navire</span><strong>≥ '+info.difficulty+'</strong></div>'+
+  '<div class="expedition-level">⛵ Navire niveau '+info.shipLevel+' · Total possible : '+info.range[0]+' à '+info.range[1]+'</div>'+
+  '<div class="expedition-success"><span>'+risk+'</span><strong>'+info.successPercent+' %</strong></div>'+
+  '<div class="forecast-meter"><div style="width:'+info.successPercent+'%"></div></div>'+
+  '<div class="expedition-footnote">'+info.winningSides+' faces gagnantes sur 6. Un échec consomme l’action, mais ton navire reste sur l’île et peut réessayer au tour suivant.</div></div>';
+ modal({icon:"🧭",title:"Expédition sur "+tile.name,
+  text:"Ton équipage doit réussir son exploration avant de pouvoir fonder un village.",
+  special,buttons:[
+   {label:"Annuler",secondary:true},
+   {label:"🎲 Lancer l’expédition",click:doColonize}
+  ]});
+}
 async function doColonize(){
  if(locked)return;
  locked=true;
  try{
   const active=state.current,before={wood:state.players[active].wood,stone:state.players[active].stone};
   const event=colonize(state);
+  const tile=state.islands[event.island];
   refresh();
-  const tile=state.islands[state.players[active].boat];
+  modal({icon:"🎲",title:"Expédition de "+name(active),text:"Le dé roule... Il faut atteindre "+event.difficulty+" ou plus, bonus compris.",
+   special:'<div id="dice-stage"></div><div class="expedition-roll-score"></div>',buttons:[]});
+  await animateDice($("dice-stage"),[event.die],[active]);
+  dialogSpecial.querySelector(".expedition-roll-score").textContent="🎲 "+event.die+" + "+event.bonus+" = "+event.total+" · Objectif "+event.difficulty;
+  await board.expeditionEffect(event.island,event.success);
+  if(!event.success){
+   dialogIcon.textContent="🌧️";dialogTitle.textContent="Expédition repoussée !";
+   dialogText.textContent="L’exploration de "+tile.name+" échoue. Ton bateau reste sur place ; réessaie à ton prochain tour.";
+   revealDiceButton("Terminer ce tour",()=>{});
+   return;
+  }
   board.spark(tile.x,tile.z,0xffe3a2);
   if(event.type==="treasure"){
-   // Exact award descriptions (the +10 resource gift still respects the 40 cap).
    const rewards={
     cargo:{
      icon:"🪵",type:"PROVISIONS ROYALES",title:"Un coffre de ressources !",
@@ -220,6 +248,7 @@ async function doColonize(){
     }
    };
    const prize=rewards[event.gift];
+   dialog.classList.remove("active");
    await board.revealTreasure(tile.id,event.gift);
    modal({
     icon:"💎",title:"Trésor découvert sur "+tile.name+" !",
@@ -231,12 +260,15 @@ async function doColonize(){
       '<div class="treasure-amount">'+prize.amount+'</div>'+
       '<div class="treasure-note">'+prize.note+'</div>'+
       '<div class="treasure-sparkles" aria-hidden="true">✧ ✦ ✧ ✦ ✧</div></div>',
-    buttons:[{label:"✨ Récupérer mon trésor",click:()=>{
-      board.spark(tile.x,tile.z,0xffefb2);
-    }}]
+    buttons:[{label:"✨ Récupérer mon trésor",click:()=>board.spark(tile.x,tile.z,0xffefb2)}]
    });
-  }else if(event.type==="end")showEnding();
-  else toast("🚩 "+tile.name+" rejoint "+name(active)+" !");
+  }else if(event.type==="end"){
+    dialog.classList.remove("active");showEnding();
+  }else{
+   dialogIcon.textContent="🚩";dialogTitle.textContent=tile.name+" rejoint "+name(active)+" !";
+   dialogText.textContent="Expédition réussie ! Le village est fondé et produira du bois et de la pierre à partir de ton prochain tour.";
+   revealDiceButton("Continuer",()=>{});
+  }
  }catch(error){toast(error.message)}
  finally{locked=false;refresh()}
 }
@@ -305,18 +337,37 @@ async function playBattle(id){
 
 function pickRefuge(){
  const opts=refugeOptions(state);
- if(!opts.length)return;
- const names=opts.map(id=>state.islands[id].name).join(", ");
- modal({icon:"⛵",title:"Retraite de "+name(1-state.current),text:"Le défenseur conserve son navire et choisit son refuge parmi : "+names+". Touche l'île sur la carte, ou choisis ci-dessous.",
- buttons:opts.map(id=>({label:state.islands[id].name,click:()=>doRetreat(id)}))
- });
+ if(!opts.length){toast("Aucun refuge disponible.");return}
+ dialog.classList.remove("active");
+ board.showRetreatOptions(opts,1-state.current);
+ board.frameIslands(opts);
+ refresh();
+ toast("✦ "+name(1-state.current)+" : touche une île lumineuse pour ton refuge.");
+}
+function confirmRetreat(id){
+ if(locked||state.stage!=="retreat")return;
+ const opts=refugeOptions(state);
+ if(!opts.includes(id)){toast("Cette île n’est pas un refuge possible.");return}
+ state.selected=id;refresh();
+ board.viewIsland(id,1.1);
+ modal({icon:"⛵",title:"Repli vers "+state.islands[id].name+" ?",
+  text:name(1-state.current)+" conservera son bateau au même niveau. Confirme la destination ou retourne à la carte pour examiner les autres îles.",
+  buttons:[
+   {label:"Retour à la carte",secondary:true,click:pickRefuge},
+   {label:"⛵ Confirmer le refuge",click:()=>doRetreat(id)}
+  ]});
 }
 async function doRetreat(id){
  if(locked)return;
+ locked=true;
  try{
-  const e=retreat(state,id);locked=true;
-  await board.sail(e.player,e.to,700);locked=false;refresh();toast("⛵ "+name(e.player)+" se réfugie sur "+state.islands[id].name);
- }catch(ex){locked=false;toast(ex.message)}
+  const move=retreat(state,id);
+  board.showRetreatOptions([]);
+  await board.sail(move.player,move.to,1050);
+  refresh();
+  toast("⛵ "+name(move.player)+" se réfugie sur "+state.islands[id].name);
+ }catch(ex){toast(ex.message)}
+ finally{locked=false;refresh()}
 }
 function nextTurn(){
  try{
@@ -338,7 +389,7 @@ function showEnding(){
 }
 $("restart").addEventListener("click",()=>modal({icon:"↻",title:"Nouvelle partie ?",text:"Recommencer génère dix nouvelles positions et ressources. La partie actuelle sera perdue.",
  buttons:[{label:"Annuler",secondary:true},{label:"Recommencer",click:reset}]}));
-$("help").addEventListener("click",()=>modal({icon:"📜",title:"Comment jouer ?",text:"Caméra : pince pour zoomer, glisse sur la mer pour explorer, utilise ⌖ pour recentrer et ◫ pour voir uniquement la carte. Le menu d’actions peut aussi être masqué et réaffiché. Chaque faction contrôle un navire. Chaque île produit 1 à 3 bois et 1 à 3 pierres par tour. Touchez une île reliée pour y naviguer. Pour attaquer une île ennemie, touchez-la puis choisissez Attaquer. Une action principale par tour. Navire : 10 puis 20 bois. Ville : 10 puis 20 pierres. 7 îles = victoire immédiate. Sinon score après 22 tours chacun.",buttons:[{label:"C'est compris"}]}));
+$("help").addEventListener("click",()=>modal({icon:"📜",title:"Comment jouer ?",text:"Caméra : pince pour zoomer, glisse sur la mer pour explorer, utilise ⌖ pour recentrer et ◫ pour voir uniquement la carte. Le menu d’actions peut aussi être masqué et réaffiché. Chaque faction contrôle un navire. Chaque île neutre demande une expédition : dé + bonus du navire contre difficulté 3, 4 ou 5. En cas d’échec, l’action est dépensée mais le bateau reste sur l’île et pourra réessayer. Chaque île produit 1 à 3 bois et 1 à 3 pierres par tour. Touchez une île reliée pour y naviguer. Pour attaquer une île ennemie, touchez-la puis choisissez Attaquer. Une action principale par tour. Navire : 10 puis 20 bois. Ville : 10 puis 20 pierres. 7 îles = victoire immédiate. Sinon score après 22 tours chacun.",buttons:[{label:"C'est compris"}]}));
 
 function hideOrShowActions(){
  const collapsed=document.body.classList.toggle("dock-closed");
@@ -371,7 +422,7 @@ try{
  board=new Board3D($("world"),onIsland);reset();
  // Development-only browser hooks: never exposed on the deployed github.io host.
  if(location.hostname==="127.0.0.1"||location.hostname==="localhost"){
-  window.__ARCHIPEL_TEST={getState:()=>state,refresh,showAttackPreview,doColonize,getBoard:()=>board,openIslandPicker,pickStartingIsland};
+  window.__ARCHIPEL_TEST={getState:()=>state,refresh,showAttackPreview,showColonizationPreview,doColonize,pickRefuge,confirmRetreat,doRetreat,getBoard:()=>board,openIslandPicker,pickStartingIsland};
  }
 }catch(ex){
  console.error("Erreur de rendu 3D",ex);
