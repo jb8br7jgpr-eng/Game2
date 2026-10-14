@@ -86,7 +86,7 @@ def make_roughness_metallic(im,name,roughness):
     return Image.fromarray(out,"RGB")
 TEXTURES={name:make_texture(name,rgb) for name,(rgb,_) in COLORS.items()}
 MATERIALS={
- n:PBRMaterial(name=f"V081_{n}",baseColorTexture=TEXTURES[n],
+ n:PBRMaterial(name=f"V082_{n}",baseColorTexture=TEXTURES[n],
       normalTexture=normal_from_texture(TEXTURES[n],strength=.14 if n in ("wood","wood_dark","thatch","thatch_light","stone","rock_dark") else .08)
           if n not in ("bronze","iron") else None,
       metallicRoughnessTexture=make_roughness_metallic(TEXTURES[n],n,rough),
@@ -390,7 +390,7 @@ def build_island():
         theta=j*2.399963
         r=3.7+(j%4)*.32
         a.sphere("stone",(r*math.cos(theta),-.58,r*math.sin(theta)),(.16,.11,.19),1)
-    a.finish(OUT/"hero-island-v081.glb")
+    a.finish(OUT/"hero-island-v082.glb")
 def sail(asset):
     # Tensioned billowing cloth with round edges and weathered seam lines.
     vertices=[];faces=[]
@@ -501,7 +501,7 @@ def build_ship():
     a.sphere("bronze",(0,2.37,.62),(.08,.09,.08),1)
     for i in range(3):
         a.sphere("bronze",(-.31+i*.31,.53,-.74),(.025,.033,.022),1)
-    a.finish(OUT/"hero-ship-v081.glb")
+    a.finish(OUT/"hero-ship-v082.glb")
 if __name__=="__main__":
     build_island()
     build_ship()
