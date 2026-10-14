@@ -134,12 +134,12 @@ function bind(){
 }
 function frame(timestamp){
  requestAnimationFrame(frame);
- const dt=Math.min(.047,Math.max(0,(timestamp-last)/1000));last=timestamp;elapsed+=dt;
+ const rawDt=Math.max(0,(timestamp-last)/1000);const dt=Math.min(.047,rawDt);last=timestamp;elapsed+=rawDt;
  if(!water)return;
  water.material.uniforms.uTime.value=elapsed;
  if(state.sailing){
   const travel=state.sailing;
-  travel.elapsed=Math.min(travel.duration,travel.elapsed+dt);
+  travel.elapsed=Math.min(travel.duration,travel.elapsed+rawDt);
   const t=travel.elapsed/travel.duration,e=t*t*(3-2*t);
   visuals.boat.position.lerpVectors(travel.from,travel.end,e);
   visuals.boat.position.z+=Math.sin(t*Math.PI)*.25;
