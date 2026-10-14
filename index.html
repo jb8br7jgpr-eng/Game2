@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#087c9b"><meta name="description" content="ARCHIPEL — conquête insulaire, deux factions, dix îles.">
+<title>ARCHIPEL — Vélyra contre Auréon</title>
+<style>
+:root{font-family:ui-rounded,"Avenir Next",Avenir,system-ui,-apple-system,sans-serif;color:#173947;background:#c5edec;font-synthesis:none}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;min-height:100dvh;background:linear-gradient(180deg,#e7f9f2 0%,#c6eeec 60%,#a7dbd4 100%)}button{font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.38;cursor:default}button:focus-visible{outline:3px solid #dfaf55;outline-offset:3px}.hidden{display:none!important}
+.shell{max-width:1240px;margin:auto;padding:14px 14px 35px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 6px 13px}.brand{display:flex;align-items:center;gap:10px}.compass{width:42px;height:42px;border:2px solid #c69b55;background:#fdf2cb;border-radius:50%;display:grid;place-items:center;font-size:25px;color:#a06c31;box-shadow:0 2px 8px #2d728b44}.brand h1{font-family:Georgia,serif;letter-spacing:.1em;color:#184b60;font-size:clamp(22px,5vw,32px);margin:0;text-shadow:0 1px #fff}.tagline{font-size:10px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;color:#7a9b9e}.header-actions{display:flex;align-items:center;gap:7px}.pill{border-radius:999px;background:#fffaf0;border:1px solid #d9c99d;box-shadow:0 2px 8px #8ab5b066;padding:9px 12px;font-weight:800;font-size:12px;color:#35515c}.mini-btn{background:#fffaf0;border:1px solid #d9c99d;border-radius:14px;padding:9px;font-size:18px;box-shadow:0 2px 7px #8ab5b066}
+.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,.65fr);gap:14px;align-items:start}.ocean-frame{position:relative;border-radius:27px;padding:7px;background:#f6eccf;box-shadow:0 8px 0 #b69d71,0 17px 32px #2b788348;border:2px solid #c5a568;overflow:hidden}.map{position:relative;width:100%;aspect-ratio:1000/1120;border-radius:21px;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 14% 19%,#5ed7d5aa,transparent 28%),radial-gradient(ellipse at 80% 80%,#76e8c8bb,transparent 32%),repeating-radial-gradient(ellipse at 52% 44%,transparent 0 35px,#ffffff12 36px 38px),linear-gradient(145deg,#0286b0 0%,#29b7c5 48%,#087aaf 100%)}.map::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 5% 68%,#e5fff522,transparent 15%),radial-gradient(circle at 70% 16%,#edfff52b,transparent 17%);z-index:0}.map::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(164deg,transparent 0 30px,#e1fffa09 32px 35px,transparent 39px 66px);animation:sea 18s linear infinite;z-index:0}@keyframes sea{to{transform:translateX(45px)}}.routes{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}.routes line{stroke:#e4ffff;stroke-width:6;stroke-dasharray:10 16;stroke-linecap:round;opacity:.75}.routes line.active{stroke:#ffe6a2;stroke-width:8;opacity:1;filter:drop-shadow(0 0 8px #ffe9b7)}.routes line.other{opacity:.32}
+.island{position:absolute;width:20%;height:18%;padding:0;border:0;background:transparent;transform:translate(-50%,-50%);z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:filter .2s,scale .2s}.island:hover{filter:brightness(1.07)}.island.selected{z-index:5;filter:drop-shadow(0 0 11px #fff8c0);scale:1.09}.island.reachable .island-art{filter:drop-shadow(0 0 7px #fef1c1)}.island-art{width:100%;height:75%;display:block;overflow:visible;filter:drop-shadow(0 7px 4px #00496060)}.island-title{font-weight:1000;font-size:clamp(9px,1.4vw,14px);white-space:nowrap;color:#173943;text-shadow:0 1px #fff;background:#fff5d9ed;border:1px solid #b9a37a;border-radius:9px;padding:2px 6px;box-shadow:0 2px 0 #b19f7e;margin-top:-6px}.resources{display:flex;gap:5px;justify-content:center;margin-top:3px;padding:2px 5px;background:#fff9e9ed;border:1px solid #e0cda0;border-radius:8px;font-size:clamp(9px,1.28vw,12px);font-weight:900;color:#39454a;box-shadow:0 1px 3px #004d6755}.resources b{font-weight:950}.boats{position:absolute;inset:0;z-index:7;pointer-events:none}.boat{position:absolute;width:10%;height:9%;transform:translate(-50%,-50%);transition:left .55s cubic-bezier(.21,.67,.23,1),top .55s cubic-bezier(.21,.67,.23,1),scale .3s;filter:drop-shadow(0 4px 4px #003d567c)}.boat svg{width:100%;height:100%;overflow:visible}.boat.v{--sail:#8551cc;--trim:#493085}.boat.a{--sail:#f28a30;--trim:#b95519}
+.map-corner{position:absolute;bottom:9px;right:10px;color:#e8fbfa85;font-family:Georgia,serif;font-size:19px;z-index:1}
+.sidebar{display:flex;flex-direction:column;gap:12px}.panel{background:#fffcf2f2;border:1px solid #dfcba6;border-radius:20px;box-shadow:0 4px 0 #bdaf91,0 9px 18px #62959a26;padding:16px}.section-eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:900;color:#a27b49;margin:0 0 6px}.panel h2{font-family:Georgia,serif;font-size:21px;margin:0 0 8px;color:#254b58}.panel p{margin:5px 0 9px;color:#526970;font-size:13px;line-height:1.5}.players{display:grid;grid-template-columns:1fr 1fr;gap:10px}.player{border:2px solid #ad83dd;background:linear-gradient(155deg,#ede0fd,#fdf9ff);border-radius:18px;padding:11px;min-width:0;box-shadow:0 3px 0 #ac9cba}.player.a{border-color:#efad6d;background:linear-gradient(155deg,#fff0d9,#fff9ee);box-shadow:0 3px 0 #bea88d}.player.active{outline:3px solid #e9d069;outline-offset:2px}.player-name{font-weight:1000;display:flex;align-items:center;gap:5px;color:#523285}.player.a .player-name{color:#b2551a}.player-stat{font-size:11px;margin-top:6px;font-weight:700;color:#4f6470}.player-stat strong{font-size:13px;color:#244350}.dots{font-size:11px;letter-spacing:.1em}
+.btn{border:0;border-radius:13px;background:linear-gradient(180deg,#e7b867,#b9853c);color:#fffdf6;text-shadow:0 1px #7a5624;font-weight:900;padding:12px 14px;box-shadow:0 3px 0 #956729;min-height:43px}.btn.primary{background:linear-gradient(180deg,#0a9ac0,#077494);box-shadow:0 3px 0 #075a70}.btn.purple{background:linear-gradient(180deg,#9d77d8,#7247ad);box-shadow:0 3px 0 #5b358c}.btn.ghost{background:#eef6f2;color:#2b5a63;text-shadow:none;border:1px solid #a5cac5;box-shadow:0 2px 0 #87b0ae}.btn.danger{background:linear-gradient(180deg,#ee9b77,#c65538);box-shadow:0 3px 0 #9e4a2d}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:11px 0}.buttons .btn{font-size:12px;padding:10px 7px}.btn.wide{width:100%}.status{font-size:13px;line-height:1.55;background:#eaf6f3;border-radius:12px;padding:10px 12px;color:#315c63;min-height:56px}.tip{font-size:12px;color:#66878c}.selected-data{background:#f9f0d9;border:1px solid #ead8ac;padding:10px;border-radius:12px;font-size:12px;line-height:1.6}.legend{display:flex;gap:8px;justify-content:center;align-items:center;font-size:11px;color:#587a80;margin:7px auto 1px;flex-wrap:wrap}.legend span{display:flex;align-items:center;gap:3px}
+.overlay{position:fixed;inset:0;background:#0c3440bb;display:flex;align-items:center;justify-content:center;padding:16px;z-index:30;backdrop-filter:blur(5px)}.dialog{max-width:420px;width:100%;border:3px solid #d5b16b;background:linear-gradient(165deg,#fffaf0,#e5f3e8);box-shadow:0 14px 50px #002c4070;border-radius:26px;padding:22px;text-align:center}.dialog h2{font-family:Georgia,serif;color:#285569;font-size:27px;margin:8px 0}.dialog p{font-size:14px;line-height:1.55;color:#4a6873}.dialog .btn{margin-top:10px}.dices{font-size:60px;display:flex;align-items:center;justify-content:center;gap:24px;margin:12px}.die{display:inline-grid;place-items:center;width:78px;height:78px;border-radius:16px;background:#fff;border:2px solid #c9a774;box-shadow:2px 5px 0 #c2a885;color:#31506a;font-weight:1000;font-size:38px}.die.rolling{animation:roll .52s ease-in-out}@keyframes roll{0%{transform:rotate(-14deg) scale(.75)}50%{transform:rotate(20deg) scale(1.12)}100%{transform:rotate(0) scale(1)}}.dialog-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.dialog-actions .btn{flex:1;min-width:120px}.dialog .mini{font-size:12px;color:#709096}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:min(91vw,450px);z-index:20;border-radius:14px;background:#193f51;color:#fff5da;padding:12px;text-align:center;font-size:13px;font-weight:700;box-shadow:0 5px 18px #0023336e;pointer-events:none}.footer{text-align:center;color:#4f7d87;font-size:11px;padding:20px 0 0}
+@media(max-width:850px){.layout{display:block}.shell{padding:8px 8px 25px}.top{padding:8px 5px 12px}.sidebar{margin-top:14px}.ocean-frame{border-radius:20px;padding:4px}.map{border-radius:16px}.island{width:22%;height:19%}.island-title{font-size:10px;padding:2px 5px}.resources{font-size:10px}.boat{width:11%}.panel{padding:13px}.brand h1{font-size:23px}.tagline{font-size:8px}.compass{height:35px;width:35px;font-size:22px}}
+@media(max-width:370px){.island-title{font-size:9px}.resources{font-size:9px;gap:2px}.island{width:24%}.brand h1{font-size:20px}.pill{padding:8px;font-size:10px}.buttons{gap:6px}.buttons .btn{font-size:11px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+ <header class="top"><div class="brand"><div class="compass">✧</div><div><h1>ARCHIPEL</h1><div class="tagline">Les royaumes des marées</div></div></div><div class="header-actions"><span class="pill" id="round-pill">Préparation</span><button class="mini-btn" id="new-game" title="Nouvelle partie" aria-label="Nouvelle partie">↻</button></div></header>
+ <div class="layout">
+  <main><div class="ocean-frame"><div class="map" id="map" aria-label="Plateau d'ARCHIPEL avec 10 îles"><svg class="routes" id="routes" viewBox="0 0 1000 1120" preserveAspectRatio="none"></svg><div id="islands"></div><div class="boats" id="boats"></div><div class="map-corner">✧</div></div></div><div class="legend"><span>🟣 Vélyra</span><span>🟠 Auréon</span><span>🌲 Bois</span><span>🪨 Pierre</span><span>✨ Île sélectionnée</span></div></main>
+  <aside class="sidebar">
+   <div class="players"><div class="player v" id="player-0"></div><div class="player a" id="player-1"></div></div>
+   <section class="panel"><div class="section-eyebrow" id="phase">Le début de l'aventure</div><h2 id="heading">Bienvenue dans l'archipel</h2><p id="instructions">Deux factions, dix îles et une seule couronne.</p><div id="status" class="status" aria-live="polite"></div><div id="selected" class="selected-data hidden"></div><div class="buttons" id="actions"></div><button class="btn wide ghost hidden" id="end-turn">Terminer mon tour →</button></section>
+   <section class="panel"><div class="section-eyebrow">Règles rapides</div><p>⛵ Une route maritime puis une action par tour. Conquête neutre gratuite, attaque au dé 🎲 + bonus.</p><p>🌲 Bois pour améliorer le bateau · 🪨 Pierre pour fortifier une île · 7 îles pour gagner immédiatement.</p><p class="tip">Prototype local à deux sur le même écran. Mode en ligne et graphismes 3D définitifs à venir.</p></section>
+  </aside>
+ </div><div class="footer">ARCHIPEL • Game2 • Prototype local 0.1 • Vélyra contre Auréon</div>
+</div>
+<div class="overlay hidden" id="overlay" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog"><div id="dialog-icon" style="font-size:42px">🏝️</div><h2 id="dialog-title">Bienvenue</h2><p id="dialog-copy"></p><div id="dialog-extra"></div><div id="dialog-buttons" class="dialog-actions"></div></div></div>
+<div class="toast hidden" id="toast" role="status"></div>
+<script>
+(function(){
+"use strict";
+var NAMES=[
+{name:"Nacréa",icon:"🐚",kind:"sand"},
+{name:"Élyndra",icon:"💦",kind:"water"},
+{name:"Miralys",icon:"🌺",kind:"flowers"},
+{name:"Thaloria",icon:"🪸",kind:"coral"},
+{name:"Calyssé",icon:"🏛️",kind:"ruins"},
+{name:"Orémis",icon:"⛰️",kind:"cliffs"},
+{name:"Syléora",icon:"🌳",kind:"forest"},
+{name:"Valcéria",icon:"🌋",kind:"volcano"},
+{name:"Iskaria",icon:"🪨",kind:"arches"},
+{name:"Ondélys",icon:"☁️",kind:"mist"}];
+var SPOTS=[[120,152],[487,120],[857,157],[292,379],[705,391],[108,619],[502,610],[884,662],[285,886],[702,912]];
+var FACTIONS=[{name:"Vélyra",color:"#8752ca",id:"v"},{name:"Auréon",color:"#eb852d",id:"a"}];
+var $=function(id){return document.getElementById(id)};
+var s,notifyTimer=0;
+function rint(n){return Math.floor(Math.random()*n)}
+function shuffled(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=rint(i+1),v=b[i];b[i]=b[j];b[j]=v}return b}
+function d6(){return 1+rint(6)}
+function linksFor(pos){
+ var all=[],edges=[],used=new Set([0]);
+ for(var i=0;i<10;i++)for(var j=i+1;j<10;j++){var dx=pos[i].x-pos[j].x,dy=pos[i].y-pos[j].y;all.push({i:i,j:j,d:Math.sqrt(dx*dx+dy*dy)})}
+ while(used.size<10){var possible=all.filter(function(e){return used.has(e.i)!==used.has(e.j)}).sort(function(a,b){return a.d-b.d});var e=possible[0];edges.push([e.i,e.j]);used.add(e.i);used.add(e.j)}
+ function has(i,j){return edges.some(function(e){return (e[0]===i&&e[1]===j)||(e[0]===j&&e[1]===i)})}
+ function degree(i){return edges.filter(function(e){return e[0]===i||e[1]===i}).length}
+ for(var k=0;k<10;k++)if(degree(k)<2){var c=all.filter(function(e){return (e.i===k||e.j===k)&&!has(e.i,e.j)}).sort(function(a,b){return a.d-b.d})[0];if(c)edges.push([c.i,c.j])}
+ var more=shuffled(all.filter(function(e){return !has(e.i,e.j)&&e.d<540})).sort(function(a,b){return a.d-b.d});
+ for(var m=0;m<2&&m<more.length;m++){if(!has(more[m].i,more[m].j))edges.push([more[m].i,more[m].j])}
+ return edges;
+}
+function initial(){
+ var names=shuffled(NAMES);
+ var pos=shuffled(SPOTS).map(function(p){return{x:p[0]+rint(27)-13,y:p[1]+rint(27)-13}});
+ return {phase:"draft",islands:names.map(function(n,i){return{name:n.name,icon:n.icon,kind:n.kind,x:pos[i].x,y:pos[i].y,wood:1+rint(3),stone:1+rint(3),owner:-1,level:0}}),edges:linksFor(pos),players:FACTIONS.map(function(f){return{name:f.name,wood:0,stone:0,ship:1,boat:-1,wins:0,turns:0}}),dice:null,first:-1,chooser:-1,chosen:0,current:0,moved:false,acted:false,selected:-1,target:-1,treasure:-1,treasureFound:false,message:"Chaque joueur lance un dé pour déterminer qui choisit son île en premier.",result:null};
+}
+function connected(a,b){return s.edges.some(function(e){return(e[0]===a&&e[1]===b)||(e[1]===a&&e[0]===b)})}
+function owned(i){return s.islands.filter(function(t){return t.owner===i})}
+function score(i){return owned(i).reduce(function(total,t){return total+1+t.level},0)}
+function player(){return s.players[s.current]}
+function islandArt(t){
+ var col=t.owner<0?"#b1a793":FACTIONS[t.owner].color;
+ var decor={sand:"🐚",water:"💦",flowers:"🌺",coral:"🪸",ruins:"🏛️",cliffs:"⛰️",forest:"🌳",volcano:"🌋",arches:"🪨",mist:"☁️"}[t.kind];
+ var house='<rect x="43" y="37" width="22" height="19" rx="3" fill="#f7ead1" stroke="#b98a55" stroke-width="1.6"/><path d="M39 39 L54 26 L69 39 Z" fill="#eea44c" stroke="#a76f34" stroke-width="1.7"/>';
+ if(t.owner<0)house='';
+ if(t.owner>=0&&t.level>=1)house+='<rect x="72" y="34" width="18" height="20" rx="2" fill="#fff0cc" stroke="#ba9869"/><path d="M68 35 L81 23 L94 35 Z" fill="#d58342"/><rect x="18" y="43" width="14" height="12" rx="2" fill="#fff0cc"/><path d="M16 43 L25 35 L34 43 Z" fill="#e8a756"/>';
+ if(t.owner>=0&&t.level>=2)house+='<path d="M27 55 V34 H36 V40 H76 V33 H85 V55" fill="none" stroke="#ddd5b8" stroke-width="10" stroke-linejoin="round"/><path d="M27 55 V34 H36 V40 H76 V33 H85 V55" fill="none" stroke="#a69e84" stroke-width="1.7"/>';
+ var flag=t.owner>=0?'<path d="M70 15 V37" stroke="#775535" stroke-width="2.7"/><path d="M71 15 L94 20 L71 26 Z" fill="'+col+'" stroke="#fff4d9" stroke-width="1.3"/>':'';
+ var sig='<text x="92" y="37" text-anchor="middle" font-size="20">'+decor+'</text>';
+ return '<svg class="island-art" viewBox="0 0 112 91" aria-hidden="true"><ellipse cx="56" cy="72" rx="51" ry="14" fill="#055772" opacity=".3"/><ellipse cx="56" cy="66" rx="51" ry="16" fill="#a6ebe2" stroke="#f3fff8" stroke-width="2"/><path d="M8 61 Q12 37 33 40 Q54 17 76 39 Q102 37 105 61 Q90 81 55 78 Q23 81 8 61 Z" fill="#e7d199" stroke="#faf0c7" stroke-width="2"/><path d="M10 56 Q26 30 44 35 Q63 22 85 41 Q104 45 103 57 Q72 73 50 68 Q27 72 10 56 Z" fill="'+(t.kind==="volcano"?"#84a379":"#85c97c")+'" stroke="#5eaa70" stroke-width="1.4"/><ellipse cx="26" cy="47" rx="14" ry="10" fill="#6aad5d"/><circle cx="18" cy="39" r="8" fill="#4faa65"/><circle cx="34" cy="38" r="10" fill="#66b35d"/>'+house+sig+flag+'</svg>';
+}
+function shipArt(f,level){
+ var sail=f===0?"#8956cf":"#f28c31",trim=f===0?"#5b398f":"#bf641f";
+ var extra=level>=2?'<path d="M55 26 L69 49 L55 49Z" fill="'+sail+'" stroke="#f9e4b8" stroke-width="1.4"/>':'';
+ var cannons=level>=2?'<circle cx="31" cy="60" r="4" fill="#374455"/><circle cx="44" cy="62" r="4" fill="#374455"/>':'';
+ return '<svg viewBox="0 0 92 82" aria-hidden="true"><ellipse cx="45" cy="71" rx="42" ry="8" fill="#d2ffff66"/><path d="M8 53 Q44 67 84 52 L72 67 Q46 80 22 66Z" fill="#8a572c" stroke="#452d27" stroke-width="3"/><path d="M12 54 Q41 65 80 54" fill="none" stroke="#e4af62" stroke-width="3"/><path d="M45 12 L45 55" stroke="#684531" stroke-width="4"/><path d="M42 14 L42 51 L15 48Z" fill="'+sail+'" stroke="#ffe6c4" stroke-width="2"/><path d="M49 21 L75 48 L49 48Z" fill="#fff0d9" stroke="#dec8a6" stroke-width="1.5"/>'+extra+cannons+'<path d="M45 11 L64 14 L45 19Z" fill="'+trim+'"/><circle cx="67" cy="59" r="2.7" fill="#f3cd75"/></svg>';
+}
+function render(){
+ var pick=s.selected>=0?s.islands[s.selected]:null,p=player();
+ $("round-pill").textContent=s.phase==="draft"?"Préparation":s.phase==="finished"?"Partie terminée":"Tour "+Math.min(22,p.turns+1)+" / 22";
+ $("routes").innerHTML=s.edges.map(function(e){var a=s.islands[e[0]],b=s.islands[e[1]],cls=s.phase==="play"&&s.selected>=0&&(e[0]===s.selected||e[1]===s.selected)?"active":"";return '<line class="'+cls+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'"/>'}).join("");
+ $("islands").innerHTML=s.islands.map(function(t,i){var reachable=s.phase==="play"&&!s.moved&&connected(p.boat,i),selected=i===s.selected;return '<button type="button" class="island'+(selected?' selected':'')+(reachable?' reachable':'')+'" data-island="'+i+'" style="left:'+(t.x/10)+'%;top:'+(t.y/11.2)+'%" aria-label="'+t.name+', '+t.wood+' bois et '+t.stone+' pierres, '+(t.owner<0?'neutre':'contrôlée par '+FACTIONS[t.owner].name)+'">'+islandArt(t)+'<div class="island-title">'+t.name+'</div><div class="resources"><span>🌲 <b>'+t.wood+'</b></span><span>🪨 <b>'+t.stone+'</b></span></div></button>'}).join("");
+ $("islands").querySelectorAll("button").forEach(function(b){b.addEventListener("click",function(){clickIsland(Number(b.dataset.island))})});
+ $("boats").innerHTML=s.players.map(function(q,i){if(q.boat<0)return"";var t=s.islands[q.boat];return '<div class="boat '+FACTIONS[i].id+'" style="left:'+(t.x/10+5.7)+'%;top:'+(t.y/11.2+5.1)+'%;scale:'+(1+(q.ship-1)*.14)+'">'+shipArt(i,q.ship)+'</div>'}).join("");
+ s.players.forEach(function(q,i){$("player-"+i).className="player "+FACTIONS[i].id+(s.phase==="play"&&s.current===i?" active":"");$("player-"+i).innerHTML='<div class="player-name">'+(i===0?'☾':'☀')+' '+q.name+'</div><div class="player-stat">🏝️ <strong>'+owned(i).length+'</strong> îles · ⭐ <strong>'+score(i)+'</strong> pts</div><div class="player-stat">⛵ Niv. '+q.ship+' · ⚔️ '+q.wins+' victoires</div><div class="player-stat">🌲 <strong>'+q.wood+'</strong>/40 · 🪨 <strong>'+q.stone+'</strong>/40</div>'});
+ $("phase").textContent=s.phase==="draft"?"Préparation de la partie":s.phase==="finished"?"Partie terminée":"Au tour de "+p.name;
+ $("heading").textContent=s.phase==="draft"?"Choisissez vos ports":s.phase==="finished"?"L'archipel a un vainqueur":"À "+p.name+" de jouer";
+ $("instructions").textContent=s.phase==="draft"?"Touchez une île lorsque votre faction est invitée à choisir son départ.":s.phase==="finished"?"Vous pouvez lancer une nouvelle partie pour changer le plateau.":"Déplacement facultatif (une route), puis une action. Touchez une île pour choisir votre destination.";
+ $("status").textContent=s.message;
+ $("selected").classList.toggle("hidden",!pick);
+ if(pick)$("selected").innerHTML='<strong>'+pick.icon+' '+pick.name+'</strong> · '+(pick.owner===-1?"Île neutre":FACTIONS[pick.owner].name)+' · '+(pick.owner<0?"aucune ville":pick.level===0?"Village":pick.level===1?"Ville":"Ville fortifiée")+'<br>🌲 +'+pick.wood+' bois / tour · 🪨 +'+pick.stone+' pierre(s) / tour';
+ var acts=[];
+ function add(label,type,enabled,cls){acts.push('<button class="btn '+(cls||"ghost")+'" data-action="'+type+'"'+(!enabled?' disabled':'')+'>'+label+'</button>')}
+ if(s.phase==="draft"){
+ add("🎲 Lancer les dés","roll",s.chooser<0,"primary");
+ }else if(s.phase==="play"){
+ var here=s.islands[p.boat],unclaimed=here.owner===-1;
+ var enemy=pick&&pick.owner===1-s.current&&connected(p.boat,s.selected)&&!s.moved;
+ var canCol=!s.acted&&unclaimed;
+ var canAttack=!s.acted&&enemy;
+ var atPort=here.owner===s.current;
+ var shipPrice=p.ship===1?10:20;
+ var cityPrice=here.level===0?10:20;
+ add("🚩 Coloniser","colonize",canCol,"primary");
+ add("⚔️ Attaquer","attack",canAttack,"danger");
+ add("⛵ Améliorer ("+shipPrice+"🌲)","ship",!s.acted&&atPort&&p.ship<3&&p.wood>=shipPrice,"purple");
+ add("🏰 Développer ("+cityPrice+"🪨)","build",!s.acted&&atPort&&here.level<2&&p.stone>=cityPrice,"ghost");
+ }
+ $("actions").innerHTML=acts.join("");
+ $("actions").querySelectorAll("button").forEach(function(b){b.addEventListener("click",function(){action(b.dataset.action)})});
+ $("end-turn").classList.toggle("hidden",s.phase!=="play");
+ $("end-turn").textContent=s.acted?"Terminer mon tour →":"Passer mon tour →";
+}
+function toast(msg){clearTimeout(notifyTimer);$("toast").textContent=msg;$("toast").classList.remove("hidden");notifyTimer=setTimeout(function(){$("toast").classList.add("hidden")},2500)}
+function dialog(icon,title,copy,buttons,extra){
+ $("dialog-icon").textContent=icon;$("dialog-title").textContent=title;$("dialog-copy").textContent=copy;
+ $("dialog-extra").innerHTML=extra||"";
+ $("dialog-buttons").innerHTML="";
+ buttons.forEach(function(b){var el=document.createElement("button");el.className="btn "+(b.className||"primary");el.textContent=b.label;el.addEventListener("click",b.fn);$("dialog-buttons").appendChild(el)});
+ $("overlay").classList.remove("hidden");
+}
+function closeDialog(){$("overlay").classList.add("hidden")}
+function clickIsland(i){
+ if(s.phase==="finished")return;
+ var t=s.islands[i];
+ if(s.phase==="draft"){
+ if(s.chooser<0){toast("Lance d'abord les dés !");return}
+ if(t.owner!==-1){toast("Cette île est déjà choisie.");return}
+ t.owner=s.chooser;s.players[s.chooser].boat=i;s.chosen++;
+ if(s.chosen===1){s.chooser=1-s.chooser;s.message="À "+FACTIONS[s.chooser].name+" de choisir sa première île."}
+ else{var empty=s.islands.map(function(x,j){return x.owner===-1?j:-1}).filter(function(x){return x>=0});s.treasure=empty[rint(empty.length)];s.phase="play";s.current=1-s.first;s.chooser=-1;s.selected=s.players[s.current].boat;startTurn();dialog("⛵","L'aventure commence !",FACTIONS[s.current].name+" joue en premier pour compenser le second choix d'île.",[{label:"Commencer",fn:closeDialog}])}
+ render();return;
+ }
+ if(i===player().boat){s.selected=i;s.target=-1;render();return}
+ if(!connected(player().boat,i)){s.selected=i;s.target=-1;s.message="Cette île n'est pas directement reliée à ton bateau.";render();return}
+ if(t.owner===1-s.current){
+ s.selected=i;s.target=i;s.message=s.moved?"Tu as déjà navigué ce tour : impossible d'attaquer une autre île.":"Île ennemie sélectionnée : utilise ⚔️ Attaquer pour lancer les dés.";
+ render();return;
+ }
+ if(s.moved){s.selected=i;s.message="Tu as déjà utilisé ton déplacement ce tour.";render();return}
+ player().boat=i;s.moved=true;s.selected=i;s.target=-1;
+ s.message="Navire arrivé à "+t.name+". "+(t.owner===-1?"Colonise l'île avec ton action !":"Tu peux développer ton île ou améliorer ton navire.");
+ render();
+}
+function action(kind){
+ if(s.phase==="draft"&&kind==="roll"){
+ var x=d6(),y=d6();while(x===y){x=d6();y=d6()}
+ s.dice=[x,y];s.first=x>y?0:1;s.chooser=s.first;
+ dialog("🎲","Qui choisit en premier ?","Vélyra : "+x+" · Auréon : "+y+". "+FACTIONS[s.first].name+" choisit son île en premier.",[{label:"Choisir une île",fn:function(){closeDialog();s.message="À "+FACTIONS[s.chooser].name+" : touche l'île que tu veux comme port de départ.";render()}}],'<div class="dices"><div class="die rolling" style="color:#7843ab">'+x+'</div><div class="die rolling" style="color:#d77526">'+y+'</div></div>');
+ render();return;
+ }
+ if(s.phase!=="play"||s.acted)return;
+ var p=player(),t=s.islands[p.boat];
+ if(kind==="colonize"&&t.owner===-1){t.owner=s.current;s.acted=true;s.message="L'île de "+t.name+" est maintenant contrôlée par "+p.name+" !";if(owned(s.current).length>=7){finish(s.current,"domination");return}if(p.boat===s.treasure&&!s.treasureFound){discover();return}render();return}
+ if(kind==="ship"&&t.owner===s.current&&p.ship<3){var cost=p.ship===1?10:20;if(p.wood<cost)return;p.wood-=cost;p.ship++;s.acted=true;s.message="Ton navire passe au niveau "+p.ship+" !";render();toast("⛵ Navire amélioré !");return}
+ if(kind==="build"&&t.owner===s.current&&t.level<2){var price=t.level===0?10:20;if(p.stone<price)return;p.stone-=price;t.level++;s.acted=true;s.message=t.name+" passe au niveau "+t.level+" !";render();toast("🏰 Construction terminée !");return}
+ if(kind==="attack"&&s.target>=0&&!s.moved){attack(s.target);return}
+}
+function attack(i){
+ var att=s.current,def=1-att,p=s.players[att],target=s.islands[i],a=d6(),b=d6();
+ if(target.owner!==def||!connected(p.boat,i))return;
+ var attackPower=a+p.ship-1,defensePower=b+target.level+(s.players[def].boat===i?1:0),win=attackPower>defensePower,old=target.level,defPresent=s.players[def].boat===i;
+ s.moved=true;s.acted=true;
+ if(win){
+ target.owner=att;target.level=Math.max(0,target.level-1);p.boat=i;p.wins++;
+ s.message=p.name+" remporte la bataille de "+target.name+" ! La défense passe de "+old+" à "+target.level+".";
+ }else{p.ship=Math.max(1,p.ship-1);s.message="Attaque repoussée sur "+target.name+" ! Le navire revient au port d'origine et perd un niveau."}
+ render();
+ var msg="⚔️ "+p.name+" : "+a+" + "+(attackPower-a)+" = "+attackPower+" • 🛡️ "+FACTIONS[def].name+" : "+b+" + "+(defensePower-b)+" = "+defensePower+". "+(win?"Île conquise, fortifications affaiblies !":"Défense victorieuse (une égalité favorise le défenseur).");
+ dialog(win?"🏆":"💥",win?"Victoire de "+p.name+" !":"Attaque repoussée !",msg,[{label:"Continuer",fn:function(){closeDialog();if(win&&owned(att).length>=7){finish(att,"domination");return}if(win&&defPresent){chooseRetreat(def);return}render()}}],'<div class="dices"><div class="die rolling">'+a+'</div><div class="die rolling">'+b+'</div></div>');
+}
+function chooseRetreat(def){
+ var homes=s.islands.map(function(t,i){return t.owner===def?i:-1}).filter(function(i){return i>=0});
+ var places=homes.length?homes:s.islands.map(function(t,i){return t.owner===-1?i:-1}).filter(function(i){return i>=0});
+ if(!places.length){finish(1-def,"domination");return}
+ dialog("⛵","Retraite de "+FACTIONS[def].name,"Le navire conserve son niveau. Choisis un port allié où il se replie"+(homes.length?".":", ou une île neutre sans la coloniser.") ,places.map(function(i){return{label:s.islands[i].name,fn:function(){s.players[def].boat=i;closeDialog();s.message+=" Le navire adverse se replie sur "+s.islands[i].name+".";render()}}}),"");
+}
+function discover(){
+ s.treasureFound=true;
+ var p=player(),t=s.islands[p.boat],options=["cargo"];if(p.ship<3)options.push("ship");if(t.level<2)options.push("town");
+ var picked=options[rint(options.length)],what="";
+ if(picked==="cargo"){p.wood=Math.min(40,p.wood+10);p.stone=Math.min(40,p.stone+10);what="Une cargaison : +10 bois et +10 pierres (limite 40)."}
+ if(picked==="ship"){p.ship++;what="Une amélioration gratuite : ton navire passe au niveau "+p.ship+" !"}
+ if(picked==="town"){t.level++;what="Les bâtisseurs légendaires élèvent "+t.name+" au niveau "+t.level+" !"}
+ s.message="💎 Trésor découvert sur "+t.name+" ! "+what;render();
+ dialog("💎","Un trésor secret !","Incroyable ! "+t.name+" cachait un coffre. "+what,[{label:"Fabuleux !",fn:closeDialog}]);
+}
+function startTurn(){
+ var p=player(),gainW=0,gainS=0;
+ owned(s.current).forEach(function(t){gainW+=t.wood;gainS+=t.stone});
+ p.wood=Math.min(40,p.wood+gainW);p.stone=Math.min(40,p.stone+gainS);
+ s.moved=false;s.acted=false;s.target=-1;s.selected=p.boat;
+ s.message="🌲 +"+gainW+" bois · 🪨 +"+gainS+" pierres. Touchez une île voisine pour naviguer, ou améliorez votre port.";
+}
+function endTurn(){
+ if(s.phase!=="play")return;
+ s.players[s.current].turns++;
+ if(s.players.every(function(p){return p.turns>=22})){finish(-1,"points");return}
+ s.current=1-s.current;if(s.players[s.current].turns>=22)s.current=1-s.current;
+ startTurn();render();dialog("⚓","À "+player().name+" !","Le tour change de faction. Passe le téléphone à l'autre joueur.",[{label:"C'est parti",fn:closeDialog}]);
+}
+function finish(winner,reason){
+ if(reason==="points"){
+ var v=[score(0),score(1)];
+ if(v[0]!==v[1])winner=v[0]>v[1]?0:1;
+ else{var n=[owned(0).length,owned(1).length];if(n[0]!==n[1])winner=n[0]>n[1]?0:1;
+ else if(s.players[0].wins!==s.players[1].wins)winner=s.players[0].wins>s.players[1].wins?0:1;else winner=-1}
+ }
+ s.phase="finished";s.result=winner;
+ s.message=winner<0?"Match nul ! Les deux factions ont réalisé la même performance.":FACTIONS[winner].name+" remporte ARCHIPEL par "+(reason==="domination"?"domination !":"son score !");
+ render();
+ dialog(winner<0?"🤝":"👑",winner<0?"Match nul !":"Victoire de "+FACTIONS[winner].name+" !",s.message+" Score final : Vélyra "+score(0)+" points ("+owned(0).length+" îles, "+s.players[0].wins+" victoires) · Auréon "+score(1)+" points ("+owned(1).length+" îles, "+s.players[1].wins+" victoires).",[{label:"Nouvelle partie",fn:function(){closeDialog();reset()}}]);
+}
+function reset(){s=initial();render();dialog("🏝️","Bienvenue sur ARCHIPEL","Prototype local à deux joueurs. Lancez les dés, choisissez vos îles de départ puis partez à la conquête !",[{label:"Découvrir le plateau",fn:closeDialog}])}
+$("new-game").addEventListener("click",function(){dialog("↻","Nouvelle partie ?","La partie en cours sera effacée. Recommencer sur un archipel entièrement différent ?",[{label:"Annuler",className:"ghost",fn:closeDialog},{label:"Recommencer",fn:function(){closeDialog();reset()}}])});
+$("end-turn").addEventListener("click",endTurn);
+reset();
+})();
+</script>
+</body>
+</html>
