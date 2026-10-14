@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#067e9e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="ARCHIPEL — Jeu de conquête tropical miniature en 3D, Vélyra contre Auréon.">
-<title>ARCHIPEL — Les royaumes des marées</title><link rel="stylesheet" href="./styles.css?v=20261014-dice-names">
+<title>ARCHIPEL — Les royaumes des marées</title><link rel="stylesheet" href="./styles.css?v=20261014-online">
 </head>
 <body class="in-lobby">
 <section class="welcome" id="welcome" aria-labelledby="welcome-title">
@@ -26,7 +26,28 @@
    <button id="start-game" class="welcome-start" type="submit"><span>⚔</span> Lancer la partie <span>➜</span></button>
    <p class="welcome-instruction">🎲 Un lancer de dés départagera les capitaines pour choisir leur île.</p>
   </form>
-  <p class="welcome-footer">✦ CONQUÊTE TACTIQUE EN 3D &nbsp;·&nbsp; 2 JOUEURS SUR LE MÊME ÉCRAN ✦</p>
+  <button id="open-online" class="welcome-online-button" type="button"><span>🌐</span> Jouer à deux en ligne <span>↗</span></button>
+  <p class="welcome-footer">✦ DEUX CAPITAINES · UN ARCHIPEL À CONQUÉRIR ✦</p>
+ </div>
+</section>
+<section class="online-lobby" id="online-lobby" hidden aria-label="Salon multijoueur ARCHIPEL">
+ <div class="online-salon">
+  <header class="online-salon-header"><img src="./archipel-logo.svg" width="72" height="72" alt=""><div><small>ARCHIPEL · MULTIJOUEUR</small><h2>Deux capitaines, deux téléphones</h2></div></header>
+  <div id="online-setup">
+   <p class="online-setup-lead">Crée un salon et partage son code, ou rejoins la partie de ton adversaire.</p>
+   <div class="online-mode-select"><button type="button" id="online-mode-create" class="chosen">⚓ Créer un salon</button><button type="button" id="online-mode-join">🔑 Rejoindre</button></div>
+   <form id="online-create-form" class="online-salon-form"><label>Ton nom de faction <span>☾ VIOLET</span><input id="online-create-name" maxlength="18" value="Vélyra" required autocomplete="nickname"></label><button class="welcome-start" type="submit">Créer mon salon →</button></form>
+   <form id="online-join-form" class="online-salon-form" hidden><label>Code du salon <input id="online-join-code" maxlength="8" placeholder="EX. ABCD2345" autocomplete="off" autocapitalize="characters" required></label><label>Ton nom de faction <span>☀ ORANGE</span><input id="online-join-name" maxlength="18" value="Auréon" required autocomplete="nickname"></label><button class="welcome-start" type="submit">Rejoindre la partie →</button></form>
+  </div>
+  <div id="online-room" hidden>
+   <p class="online-kicker">CODE DU SALON</p><div id="online-room-code" class="online-room-code">••••••••</div>
+   <p id="online-room-status" class="online-setup-lead">En attente de l'autre capitaine…</p>
+   <div class="online-room-players"><div class="online-room-player purple"><span>☾ VIOLET</span><strong id="online-player-0">En attente</strong></div><div class="online-room-player orange"><span>☀ ORANGE</span><strong id="online-player-1">En attente</strong></div></div>
+   <div class="online-room-tools"><button id="online-share" type="button">🔗 Copier le lien</button><button id="online-copy" type="button">📋 Copier le code</button></div>
+   <button id="online-launch" class="welcome-start" type="button" hidden>⚔ Lancer la partie !</button>
+  </div>
+  <p class="online-error" id="online-error" role="status" aria-live="polite"></p>
+  <button id="online-close" type="button" class="online-back">← Retour à l’accueil / quitter le salon</button>
  </div>
 </section>
 <canvas id="world" role="img" aria-label="Plateau miniature 3D de dix îles tropicales"></canvas>
@@ -54,6 +75,6 @@
 <div class="panel-head"><div><div class="stage-caption">VOTRE AVENTURE</div><div class="stage-name" id="stage-name">Bienvenue</div><div class="status-line" id="status-line"></div></div><div class="detail" id="island-detail"><span class="tile-name">ARCHIPEL</span></div></div><div class="panel-guide" id="guide-text">Navigation, construction et conquête</div><div class="actions" id="actions"><button class="action hero" disabled>Chargement 3D…</button></div></section></main>
 <div class="overlay" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-card"><div class="dialog-icon" id="dialog-icon">🏝️</div><h2 class="dialog-title" id="dialog-title">Bienvenue</h2><p class="dialog-text" id="dialog-text"></p><div id="dialog-special"></div><div class="dialog-buttons" id="dialog-buttons"></div></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div><div id="fallback" class="fallback hidden"></div>
-<script type="module" src="./app.js?v=20261014-dice-names"></script>
+<script type="module" src="./app.js?v=20261014-online"></script>
 <script>setTimeout(()=>{const p=document.getElementById("fallback");if(p&&document.querySelector("#actions .hero:disabled")){p.classList.remove("hidden");p.innerHTML="<h2>Rendu 3D indisponible</h2><p>Vérifie ta connexion, puis recharge ARCHIPEL dans Safari ou Chrome récent.</p>";}},18000);</script>
 </body></html>
