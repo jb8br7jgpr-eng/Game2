@@ -30,31 +30,39 @@ COLORS={
  "accent":((68,141,162),.63),
  "bronze":((215,164,77),.45),
  "coral":((230,147,133),.86),
+ "rock_dark":((103,108,108),.94),
+ "moss":((74,131,74),.98),
+ "wet_sand":((190,171,129),.84),
+ "wood_dark":((101,64,42),.82),
+ "rope":((193,164,118),.95),
+ "thatch_light":((225,184,112),.97),
+ "iron":((75,87,93),.52),
+ "shell":((248,232,200),.93),
 }
 def make_texture(name,color):
-    w=192
+    w=256
     array=np.zeros((w,w,3),dtype=np.uint8)
     base=np.array(color,float)
     rng=np.random.default_rng(100+sum(ord(c) for c in name))
     yy,xx=np.indices((w,w))
     coarse=np.sin(xx*.078+np.sin(yy*.054))*5
     mottling=rng.normal(0,6,(w,w))+coarse
-    if name in ("wood","thatch"):
+    if name in ("wood","wood_dark","thatch","thatch_light","rope"):
         mottling+=9*np.sin(yy*.34+np.sin(xx*.044))+5*np.sin(yy*.91)
-    if name=="stone":
+    if name in ("stone","rock_dark"):
         mottling+=7*np.sin(xx*.032+yy*.075)+4*np.sin(xx*.12-yy*.09)
-    if name=="grass":
+    if name in ("grass","moss"):
         mottling+=7*np.sin(xx*.19)*np.cos(yy*.17)
-    if name=="sand":
+    if name in ("sand","wet_sand"):
         mottling+=rng.uniform(-3,3,(w,w))
     for ch in range(3):
         array[:,:,ch]=np.uint8(np.clip(base[ch]+mottling*(.68+ch*.11),0,255))
     im=Image.fromarray(array,"RGB")
-    if name in ("wood","thatch"):
+    if name in ("wood","wood_dark","thatch","thatch_light","rope"):
         d=ImageDraw.Draw(im,"RGBA")
-        for j in range(5,192,14 if name=="wood" else 7):
-            tint=(70,42,22,35) if name=="wood" else (255,225,148,42)
-            d.line((0,j,191,j+(j%5)),fill=tint,width=1)
+        for j in range(5,w,14 if name in ("wood","wood_dark") else 7):
+            tint=(70,42,22,35) if name in ("wood","wood_dark") else (255,225,148,42)
+            d.line((0,j,w-1,j+(j%5)),fill=tint,width=1)
     return im
 def normal_from_texture(im,strength=.095):
     gray=np.asarray(im.convert("L"),dtype=np.float32)
@@ -64,11 +72,25 @@ def normal_from_texture(im,strength=.095):
     nx=xx/length;ny=yy/length;nz=1/length
     normal=np.stack(((nx+1)*127.5,(ny+1)*127.5,(nz+1)*127.5),axis=-1)
     return Image.fromarray(np.uint8(np.clip(normal,0,255)),"RGB")
+def make_roughness_metallic(im,name,roughness):
+    # glTF texture convention: G roughness, B metallic.
+    # The varying green channel gives timber, stone and canvas natural highlights.
+    a=np.asarray(im.convert("L"),dtype=np.float32)
+    ry,rx=np.gradient(a)
+    rough=np.clip(roughness*255+(a-125)*.21+np.hypot(rx,ry)*.35,43,255)
+    metallic=np.full(a.shape,16 if name in ("bronze","iron") else 0,dtype=np.uint8)
+    out=np.empty((*a.shape,3),dtype=np.uint8)
+    out[:,:,0]=255
+    out[:,:,1]=rough.astype(np.uint8)
+    out[:,:,2]=metallic
+    return Image.fromarray(out,"RGB")
 TEXTURES={name:make_texture(name,rgb) for name,(rgb,_) in COLORS.items()}
 MATERIALS={
  n:PBRMaterial(name=f"V081_{n}",baseColorTexture=TEXTURES[n],
-      normalTexture=normal_from_texture(TEXTURES[n]) if n in ("wood","thatch","stone","grass","sand","linen") else None,
-      metallicFactor=.11 if n=="bronze" else .0,roughnessFactor=rough,
+      normalTexture=normal_from_texture(TEXTURES[n],strength=.14 if n in ("wood","wood_dark","thatch","thatch_light","stone","rock_dark") else .08)
+          if n not in ("bronze","iron") else None,
+      metallicRoughnessTexture=make_roughness_metallic(TEXTURES[n],n,rough),
+      metallicFactor=.20 if n in ("bronze","iron") else .0,roughnessFactor=1.0,
       doubleSided=True)
  for n,(rgb,rough) in COLORS.items()
 }
@@ -104,7 +126,7 @@ class Asset:
             v=np.concatenate(vertices,axis=0)
             m=trimesh.Trimesh(vertices=v,faces=np.concatenate(faces,axis=0),process=False)
             m.visual=TextureVisuals(uv=np.concatenate(uv,axis=0),material=MATERIALS[material])
-            scene.add_geometry(m,node_name="V081_"+material)
+            scene.add_geometry(m,node_name="V082_"+material)
         blob=scene.export(file_type="glb")
         path.write_bytes(blob)
         print(f"Wrote {path.name}: {len(blob)//1024} KiB, {len(scene.geometry)} textured meshes")
