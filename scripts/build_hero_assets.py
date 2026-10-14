@@ -287,6 +287,22 @@ def hut(asset):
             for j in range(9):
                 zz=z-1.27+j*.275+((i%2)*.06)
                 asset.beam("thatch",(bx,yy,zz),(bx+side*.084,yy-.031,zz+.16),.026,5)
+    # Several loose thatch strands follow the roof eaves; no solid overlapping roof box.
+    for side in (-1,1):
+        for k in range(29):
+            bz=z-1.29+k*.084
+            swing=.042*math.sin(k*.88+side)
+            bx=x+side*(1.49+swing)
+            asset.beam("thatch_light",(bx,edge+.014,bz),
+                (bx+side*.09,edge-.13-.032*math.sin(k*.9),bz+.045),.019,5)
+    for iz in range(12):
+        zz=z-1.37+iz*.21
+        asset.beam("wood_dark",(x,ridge+.045,zz),(x,ridge+.045,zz+.19),.037,7)
+    # A front gable with carved dark wood bracing.
+    front=z+1.1
+    asset.beam("wood_dark",(x-1.12,2.32,front),(x,2.96,front),.050)
+    asset.beam("wood_dark",(x+1.12,2.32,front),(x,2.96,front),.050)
+    asset.beam("wood_dark",(x-.12,2.70,front),(x+.12,2.70,front),.041)
     # door and trim
     asset.box("wood",(x,1.42,z+.75),(.67,1.03,.058))
     asset.sphere("bronze",(x+.20,1.38,z+.80),(.038,.043,.029))
@@ -295,6 +311,9 @@ def hut(asset):
         asset.beam("wall",(wx-.22,1.73,z+.82),(wx+.22,1.73,z+.82),.024)
         asset.beam("wall",(wx,1.54,z+.82),(wx,1.94,z+.82),.024)
         asset.box("wood",(wx,1.51,z+.84),(.52,.09,.15))
+        for sign in (-1,1):
+            asset.box("wood_dark",(wx+sign*.34,1.75,z+.835),(.17,.45,.065))
+            asset.beam("bronze",(wx+sign*.35,1.70,z+.88),(wx+sign*.35,1.89,z+.88),.017,6)
     # porch handrails, steps and golden lanterns
     for bx in (x-1.27,x+1.27):
         for bz in (z+.80,z+1.2):
@@ -308,6 +327,20 @@ def hut(asset):
         asset.sphere("bronze",(bx,2.18,z+1.10),(.11,.13,.10))
     for i in range(4):
         asset.box("wood",(x-1.27+i*.82,.99,z+1.16),(.24,.38,.20))
+    # Canvas awning and its timber supports beyond the staircase.
+    awning=[(x-1.46,2.25,z+.84),(x+1.46,2.25,z+.84),
+            (x-1.46,2.12,z+1.29),(x+1.46,2.12,z+1.29)]
+    asset.mesh("linen",awning,((0,2,1),(1,2,3)))
+    for xx in [x-1.46,x+1.46]:
+        asset.beam("wood",(xx,1.24,z+1.29),(xx,2.13,z+1.29),.042)
+    # Independent ringed barrels sit at the back of the terrace.
+    for i in range(3):
+        xx=x-1.14+i*.29
+        zz=z+1.12+(i%2)*.17
+        asset.beam("wood_dark",(xx,1.08,zz),(xx,1.39,zz),.125,9)
+        for h in [1.12,1.35]:
+            asset.beam("bronze",(xx-.12,h,zz-.016),(xx+.12,h,zz-.016),.018,6)
+    rolled_rope(asset,x+1.15,1.02,z+1.08,.14,3)
 def pier(asset):
     for i in range(10):
         x=-2.25-i*.38
@@ -315,6 +348,11 @@ def pier(asset):
         if i%2==0:
             for z in (1.15,2.19):
                 asset.beam("wood",(x,-.23,z),(x,.84,z),.09)
+    for j in range(10):
+        x=-2.25-j*.38
+        # Visible individual dowels and nails on the pier boards.
+        for zz in (1.23,2.12):
+            asset.sphere("iron",(x,.45,zz),(.025,.016,.025),1)
     for z in (1.15,2.19):
         for i in range(9):
             x1=-2.25-i*.38;x2=x1-.38
