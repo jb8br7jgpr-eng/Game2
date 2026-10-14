@@ -1,5 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-import {connected} from "./game.js?v=20261014-06";
+import {connected} from "./game.js?v=20261014-06f";
 import {islandMiniature,shipMiniature} from "./art-v06.js";
 import {dockPosition} from "./docks-v06.js";
 
