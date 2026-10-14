@@ -1,8 +1,10 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-import {FACTIONS,connected} from "./game.js?v=20261014-05";
+import {FACTIONS,connected} from "./game.js?v=20261014-06";
 import {enhanceIsland,enhanceShip} from "./art-v03.js";
 import {organicFoundation,architectureDetail,shipDetail} from "./art-v04.js";
 import {craftIslandV05,craftShipV05} from "./art-v05.js";
+import {islandMiniature,shipMiniature} from "./art-v06.js";
+import {dockPosition} from "./docks-v06.js";
 
 // Procedural 3D toy models: real geometry, rounded silhouettes, soft sunlight.
 // No pre-rendered concept-art pasted onto flat images.
@@ -127,66 +129,16 @@ function themed(g,type,seed){
  }
 }
 function island3D(tile){
- const g=new THREE.Group();g.userData.islandId=tile.id;
- organicFoundation(g,tile,THREE,M);
- // Every neutral island has a small miniature tropical landscape.
- // Keep the toy-sized scenery readable even before villages are founded.
- palm(g,-.57,-.43,1.08);
- ball(g,M.rock,.64,.69,.40,.13,.14,.15,7);
- ball(g,M.sand,.60,.61,.28,.25,.038,.17,8);
- const landscape=new THREE.Group();themed(landscape,tile.theme,tile.id);
- landscape.scale.setScalar(1.12);landscape.position.y=-.065;g.add(landscape);
- if(tile.owner!==null){
-  const settlement=new THREE.Group();town(settlement,tile.level,tile.owner);
-  settlement.scale.setScalar(1.18);settlement.position.y=-.15;g.add(settlement);
- }
- enhanceIsland(g,tile,THREE,M);
- architectureDetail(g,tile,THREE,M);
- craftIslandV05(g,tile,THREE,M);
- // Invisible but genuinely 3D tap target, with tagged object.
- const pick=mesh(new THREE.CylinderGeometry(1.25,1.25,.65,18),
-   new THREE.MeshBasicMaterial({visible:false}),0,.66,0,false);
- pick.userData.islandId=tile.id;g.add(pick);
- g.position.set(tile.x,.03,tile.z);return g;
+ const group=islandMiniature(tile,THREE);
+ group.position.set(tile.x,.03,tile.z);
+ return group;
 }
-function ship3D(player,level){
- const g=new THREE.Group(),orange=player===1;
- const sailMat=orange?M.orange:M.purple,trim=orange?0xe5b56c:0xbeb4dd;
- const SIZE=[.86,1.08,1.30][level-1];
- ball(g,M.woodDark,0,.20,0,.36,.20,.70);
- ball(g,M.wood,0,.27,-.07,.36,.19,.65);
- cone(g,M.woodDark,.23,.38,0,.18,-.73,5).rotation.x=Math.PI/2;
- const deck=box(g,M.wood,.52,.06,.85,0,.41,.05);
- cyl(g,M.woodDark,.039,.05,1.15,0,.95,-.1,7);
- // Triangle sail faces towards camera in x-y plane.
- const points=[new THREE.Vector3(-.33,.52,.01),new THREE.Vector3(.30,.52,.01),new THREE.Vector3(-.20,1.43,.01)];
- const geo=new THREE.BufferGeometry().setFromPoints(points);geo.setIndex([0,1,2]);geo.computeVertexNormals();
- const sail=mesh(geo,sailMat,0,0,-.10);g.add(sail);
- const backSail=mesh(new THREE.PlaneGeometry(.37,.52),M.wall,.17,1.00,.25);backSail.rotation.y=.10;g.add(backSail);
- box(g,M.woodDark,.05,.08,.04,0,1.52,-.1);
- const pennant=mesh(new THREE.ConeGeometry(.15,.30,3),sailMat,.14,1.51,-.10);pennant.rotation.z=Math.PI/2;g.add(pennant);
- if(level>=2){
-  cyl(g,M.woodDark,.028,.033,.80,.08,.82,.38,6);
-  const g2=new THREE.BufferGeometry().setFromPoints([v(-.1,.60,.40),v(.32,.60,.40),v(.08,1.18,.40)]);g2.setIndex([0,1,2]);g2.computeVertexNormals();g.add(mesh(g2,sailMat));
- }
- for(let i=0;i<level-1;i++){
-  const z=(i-.1)*.27-.30;
-  for(const side of [-1,1]){
-   const cannon=cyl(g,M.cannon,.053,.060,.20,side*.35,.40,z,8);cannon.rotation.z=Math.PI/2;
-  }
- }
- ball(g,M.gold,0,.22,-.65,.08,.09,.10);
- enhanceShip(g,player,level,THREE,M);
- shipDetail(g,player,level,THREE,M);
- craftShipV05(g,player,level,THREE,M);
- g.scale.setScalar(SIZE);g.userData.player=player;
- return g;
-}
+function ship3D(player,level){return shipMiniature(player,level,THREE);}
 export class Board3D{
  constructor(canvas,onIsland){
   this.canvas=canvas;this.onIsland=onIsland;this.scene=new THREE.Scene();
   this.scene.background=new THREE.Color(0x6eced2);
-  this.scene.fog=new THREE.Fog(0x7bd5d5,22,75);
+  this.scene.fog=new THREE.Fog(0x7bd5d5,38,110);
   this.camera=new THREE.OrthographicCamera(-4,4,9,-9,.1,120);
   this.camera.position.set(6.5,16.5,30);this.camera.lookAt(0,0,0);
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
@@ -244,7 +196,7 @@ export class Board3D{
   this.outline=new THREE.Group();this.scene.add(this.outline);
   this.currentGame=null;this.tweens=[];this.dragged=false;this.scale=.82;
   this.center=new THREE.Vector3(0,0,0);this.pointers=new Map();this.pinchDistance=0;this.lastTap=0;
-  this.wakes=[];this.wakeClock=0;this.followPoint=null;this.seaPulse=0;
+  this.wakes=[];this.wakeClock=0;this.followPoint=null;this.seaPulse=0;this.treasureFx=null;
   this.wakeGeometry=new THREE.SphereGeometry(.095,8,5);
   this.wakeMaterial=new THREE.MeshBasicMaterial({color:0xf2fffb,transparent:true,opacity:.6,depthWrite:false});
   this.markers=document.getElementById("markers");this.markerNodes=[];
@@ -285,8 +237,8 @@ export class Board3D{
   });
  }
  updateCamera(){
-  this.center.x=THREE.MathUtils.clamp(this.center.x,-10.5,10.5);
-  this.center.z=THREE.MathUtils.clamp(this.center.z,-22.0,22.0);
+  this.center.x=THREE.MathUtils.clamp(this.center.x,-36,36);
+  this.center.z=THREE.MathUtils.clamp(this.center.z,-36,36);
   this.camera.position.set(this.center.x+6.5,16.5,this.center.z+30);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   this.canvas.dataset.cameraCenter=this.center.x.toFixed(3)+","+this.center.z.toFixed(3);
@@ -383,6 +335,11 @@ export class Board3D{
   this.lastTap=now;
  }
 
+ // Exact same offshore berth is used at spawn, after upgrades and after every voyage.
+ boatTarget(player,id){
+  const p=this.currentGame.players[player],pt=dockPosition(this.currentGame.islands,id,player,p.ship);
+  return v(pt.x,.34,pt.z);
+ }
  rebuild(game){
   this.currentGame=game;
   this.water.uniforms.islands.value=game.islands.map(t=>new THREE.Vector2(t.x,t.z));
@@ -437,7 +394,7 @@ export class Board3D{
   if(marks.instanceColor)marks.instanceColor.needsUpdate=true;
   marks.frustumCulled=false;marks.castShadow=false;
   this.routeMarks=marks;this.routeGroup.add(marks);
-  this.boatModels=[0,1].map(i=>{const p=game.players[i];const g=ship3D(i,p.ship);const loc=p.boat===null?{x:0,z:0}:game.islands[p.boat];g.position.set(loc.x+1.32,.32,loc.z+.89);g.visible=p.boat!==null;this.boatRoot.add(g);return{group:g,level:p.ship,player:i}});
+  this.boatModels=[0,1].map(i=>{const p=game.players[i];const g=ship3D(i,p.ship);const berth=p.boat===null?v(0,.34,0):this.boatTarget(i,p.boat);g.position.copy(berth);g.visible=p.boat!==null;this.boatRoot.add(g);return{group:g,level:p.ship,player:i}});
   this.focus(game.selected??-1,game);
  }
  sync(game){
@@ -455,7 +412,7 @@ export class Board3D{
     this.boatRoot.add(g);g.userData.popAge=.65;g.userData.defaultScale=g.scale.x;this.boatModels[i]={group:g,level:p.ship,player:i};
    }
    const g=this.boatModels[i].group;g.visible=p.boat!==null;
-   if(p.boat!==null&&!g.userData.inMotion){const t=game.islands[p.boat];g.position.x=t.x+1.32;g.position.z=t.z+.89}
+   if(p.boat!==null&&!g.userData.inMotion){const berth=this.boatTarget(i,p.boat);g.position.x=berth.x;g.position.z=berth.z}
   });
   this.focus(game.selected??-1,game);
  }
@@ -480,7 +437,7 @@ export class Board3D{
 
  async sail(player,to,duration=950){
   const group=this.boatModels[player]?.group;if(!group)return;
-  const t=this.currentGame.islands[to],end=v(t.x+1.32,.32,t.z+.89);
+  const t=this.currentGame.islands[to],end=this.boatTarget(player,to);
   // Longer sea lanes take a little longer; the camera gently follows the ship.
   const distance=group.position.distanceTo(end);
   this.followPoint=new THREE.Vector3(t.x,0,t.z);
@@ -521,18 +478,19 @@ export class Board3D{
   for(let j=0;j<5;j++)this.createWake(to.x+(Math.random()-.5)*.6,to.z+(Math.random()-.5)*.6);
  }
  async battleMotion(event){
-  const g=this.boatModels[event.attacker].group,target=this.currentGame.islands[event.to],start=g.position.clone();
-  const mid=v(start.x+(target.x+1.32-start.x)*.70,.32,start.z+(target.z+.89-start.z)*.70);
-  await this.tweenBoat(g,mid,Math.min(1400,Math.max(850,start.distanceTo(mid)*145)));
-  // Real projectile arc and impact on the mini-diorama.
+  const g=this.boatModels[event.attacker].group;
+  const target=this.currentGame.islands[event.to],start=g.position.clone();
+  const port=this.boatTarget(event.attacker,event.to);
+  const mid=start.clone().lerp(port,.74);
+  await this.tweenBoat(g,mid,Math.min(1800,Math.max(880,start.distanceTo(mid)*150)));
   this.spark(g.position.x,g.position.z,0xffd27c);
-  await this.cannonBall(g.position.clone(),v(target.x,.42,target.z+.08),event.win);
+  await this.cannonBall(g.position.clone(),v(target.x,.45,target.z+.08),event.win);
   if(event.win){
-   this.spark(target.x,target.z,0xffe1a2);
-   await this.tweenBoat(g,v(target.x+1.32,.32,target.z+.89),590);
+    this.spark(target.x,target.z,0xffe1a2);
+    await this.tweenBoat(g,port,630);
   }else{
-   this.spark(g.position.x,g.position.z,0xa0eaff);
-   await this.tweenBoat(g,start,850);
+    this.spark(g.position.x,g.position.z,0xa0eaff);
+    await this.tweenBoat(g,start,890);
   }
  }
 
@@ -544,6 +502,81 @@ export class Board3D{
    const orb=mesh(new THREE.SphereGeometry(.045+Math.random()*.04,5,4),mat,x+Math.cos(a)*r,.7+Math.random()*.27,z+Math.sin(a)*r,false);particles.add(orb)
   }
   const started=performance.now();const remove=()=>{const t=(performance.now()-started)/650;particles.scale.setScalar(1+t*.9);mat.opacity=Math.max(0,1-t);if(t>=1){this.scene.remove(particles);mat.dispose()}else requestAnimationFrame(remove)};requestAnimationFrame(remove);
+ }
+ async revealTreasure(islandId,gift){
+  const island=this.currentGame.islands[islandId];
+  if(!island)return;
+  const root=new THREE.Group();
+  root.position.set(island.x,1.15,island.z);
+  this.scene.add(root);
+  const gold=new THREE.MeshStandardMaterial({color:0xffd678,metalness:.48,roughness:.24}),
+        wood=new THREE.MeshStandardMaterial({color:0x986138,roughness:.68}),
+        shine=new THREE.MeshBasicMaterial({color:0xfff3b7,transparent:true,opacity:.72,depthWrite:false});
+  const base=mesh(new THREE.BoxGeometry(.91,.48,.66),wood,0,.1,0);
+  root.add(base);
+  for(const yy of [-.12,.22]){
+   const rim=mesh(new THREE.BoxGeometry(.94,.07,.70),gold,0,yy,0);root.add(rim);
+  }
+  const lock=mesh(new THREE.BoxGeometry(.16,.17,.045),gold,0,.1,.365);root.add(lock);
+  const lidRoot=new THREE.Group();lidRoot.position.set(0,.33,-.25);root.add(lidRoot);
+  const lid=mesh(new THREE.BoxGeometry(.96,.22,.69),wood,0,.12,.28);lidRoot.add(lid);
+  for(const zz of [-.045,.60])lidRoot.add(mesh(new THREE.BoxGeometry(.98,.065,.08),gold,0,.23,zz));
+  const prize=new THREE.Group();root.add(prize);
+  const prizeMat=new THREE.MeshStandardMaterial({color:gift==="cargo"?0xffd269:gift==="ship"?0xb5a1fb:0xffe1b1,metalness:.25,roughness:.3});
+  if(gift==="cargo"){
+   for(const i of [-1,0,1])prize.add(mesh(new THREE.CylinderGeometry(.16,.16,.075,18),prizeMat,i*.26,.27,0));
+  }else if(gift==="ship"){
+   prize.add(mesh(new THREE.BoxGeometry(.44,.11,.26),wood,0,.22,0));
+   prize.add(mesh(new THREE.ConeGeometry(.27,.52,3),prizeMat,.02,.57,0));
+  }else{
+   prize.add(mesh(new THREE.CylinderGeometry(.27,.30,.42,8),prizeMat,0,.40,0));
+   prize.add(mesh(new THREE.ConeGeometry(.36,.28,8),gold,0,.77,0));
+  }
+  const rays=new THREE.Group();root.add(rays);
+  const raysGeo=new THREE.SphereGeometry(.055,6,5);
+  for(let i=0;i<42;i++){
+   const a=(i*2.399963),r=.45+(i%5)*.17;
+   const ball=mesh(raysGeo,i%3===0?gold:shine,Math.cos(a)*r,.35+(i%7)*.14,Math.sin(a)*r,false);
+   ball.userData.theta=a;ball.userData.phase=i*.32;rays.add(ball);
+  }
+  const halo=mesh(new THREE.TorusGeometry(.86,.07,7,40),
+    new THREE.MeshBasicMaterial({color:0xfff5bd,transparent:true,opacity:.6,depthWrite:false}),0,-.25,0,false);
+  halo.rotation.x=-Math.PI/2;root.add(halo);
+  const previous={center:this.center.clone(),scale:this.scale};
+  const started=performance.now(),duration=2550;
+  await new Promise(resolve=>{
+   const frame=now=>{
+    const u=Math.min(1,(now-started)/duration),open=Math.min(1,Math.max(0,(u-.14)/.30));
+    const pop=1+Math.sin(Math.min(1,u*2)*Math.PI)*.30;
+    root.position.y=1.16+Math.sin(u*Math.PI)*.37;
+    root.scale.setScalar(pop);
+    lidRoot.rotation.x=-open*1.42;
+    prize.position.y=Math.max(0,u-.20)*1.06;
+    prize.rotation.y=u*Math.PI*4;
+    rays.rotation.y=u*8;
+    rays.children.forEach(b=>{
+      b.position.y=.38+Math.sin(u*7+b.userData.phase)*.27+(u*.5);
+      b.scale.setScalar(u<.13?.05:.65+Math.sin(u*12+b.userData.phase)*.36);
+    });
+    halo.scale.setScalar(1+u*1.7);
+    halo.material.opacity=Math.max(0,.70*(1-u));
+    this.center.lerpVectors(previous.center,v(island.x,0,island.z),Math.sin(Math.min(1,u*1.35)*Math.PI*.5)*.76);
+    this.scale=THREE.MathUtils.lerp(previous.scale,Math.max(previous.scale,1.12),Math.sin(Math.min(1,u*1.6)*Math.PI*.5));
+    this.updateCamera();this.resize();
+    if(u<1)requestAnimationFrame(frame);
+    else resolve();
+   };requestAnimationFrame(frame);
+  });
+  this.scene.remove(root);
+  root.traverse(o=>{
+    if(o.geometry&&o.geometry!==raysGeo)o.geometry.dispose();
+    if(o.material&&o.material!==gold&&o.material!==wood&&o.material!==shine&&o.material!==prizeMat)o.material.dispose();
+  });
+  raysGeo.dispose();gold.dispose();wood.dispose();shine.dispose();prizeMat.dispose();
+  // Keep the discovered island in view so the reward can be admired.
+  this.center.set(island.x,0,island.z);this.scale=Math.max(previous.scale,1.0);
+  this.updateCamera();this.resize();
+  this.spark(island.x,island.z,0xffdda3);
  }
  createWake(x,z){
   const wave=new THREE.Mesh(this.wakeGeometry,this.wakeMaterial.clone());
