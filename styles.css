@@ -511,3 +511,12 @@ body[data-faction="aureon"] .island-label.retreat-target{
 @media(prefers-reduced-motion:reduce){
  .welcome-logo,.welcome-star,.welcome::after{animation:none}
 }
+
+/* Player identity is explicit even when island colours are subtle in the 3D world. */
+.island-label.violet{border:2px solid #a074e3;background:linear-gradient(#f5ecff,#eee3fb)}
+.island-label.orange{border:2px solid #efa457;background:linear-gradient(#fff1d9,#ffebd3)}
+.island-faction{display:block;font-size:9px;line-height:1.25;font-weight:950;margin:3px 0 0;
+ max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.island-faction:empty{display:none}
+.island-label.violet .island-faction{color:#7542b6}
+.island-label.orange .island-faction{color:#b96a27}
