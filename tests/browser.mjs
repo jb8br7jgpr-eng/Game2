@@ -19,14 +19,23 @@ try{
  await page.waitForTimeout(6000);
  console.log("INITIAL STATE",JSON.stringify(await page.evaluate(()=>({url:location.href,html:document.getElementById("actions")?.innerText,modal:document.getElementById("dialog")?.className,fallback:document.getElementById("fallback")?.innerText}))));
  mkdirSync("artifacts",{recursive:true});await page.screenshot({path:"artifacts/archipel-debug.png"});
- await page.locator("#dialog.active").waitFor({timeout:12000});
+ await page.locator("#welcome").waitFor({state:"visible",timeout:12000});
+ assert.ok(await page.locator(".welcome-logo").evaluate(img=>img.complete&&img.naturalWidth>0),"vector game logo loads");
+ assert.equal(await page.locator("#player-name-0").inputValue(),"Vélyra");
+ assert.equal(await page.locator("#player-name-1").inputValue(),"Auréon");
  assert.ok(await page.locator("#world").isVisible(),"WebGL canvas visible");
  const gl=await page.evaluate(()=>!!document.querySelector("canvas")?.getContext("webgl2"));
  assert.ok(gl,"WebGL2 available");
  console.log("PASS: Three.js scene and mobile viewport loaded");
  mkdirSync("artifacts",{recursive:true});
  await page.screenshot({path:"artifacts/archipel-3d-mobile.png"});
- await page.getByRole("button",{name:/Découvrir l'archipel/}).click();
+ await page.locator("#player-name-0").fill("Lunaria");
+ await page.locator("#player-name-1").fill("Solaria");
+ await page.locator("#start-game").click();
+ assert.equal(await page.locator("#welcome").isVisible(),false,"launch button closes welcome");
+ assert.deepEqual(await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().players.map(p=>p.name)),["Lunaria","Solaria"]);
+ assert.equal(await page.locator("#team-0 .team-title").innerText(),"Lunaria");
+ assert.equal(await page.locator("#team-1 .team-title").innerText(),"Solaria");
  await page.getByRole("button",{name:/Lancer les dés/}).click();
  await page.locator(".dice-settled").waitFor({timeout:8000});
  const cubes=await page.locator(".die-object").count();
@@ -43,6 +52,10 @@ try{
  assert.notEqual(observedCenter,"0.000,0.000","3D island scouting pans camera");
  await page.getByRole("button",{name:/Voir les 10 îles/}).click();
  await page.locator(".draft-choose").first().click();
+ const firstOwner=await page.evaluate(()=>{const s=window.__ARCHIPEL_TEST.getState();return {owner:s.islands[0].owner,firstChooser:s.firstChooser};});
+ assert.equal(firstOwner.owner,firstOwner.firstChooser,"first-selected island belongs to correct dice winner");
+ assert.ok(await page.locator(".island-label").nth(0).evaluate((n,owner)=>n.classList.contains(owner===0?"violet":"orange"),firstOwner.owner),"first claimed island shows its actual faction color");
+ assert.ok((await page.locator(".island-label").nth(0).locator(".island-faction").innerText()).includes(firstOwner.owner===0?"Lunaria":"Solaria"),"owner name shown on island");
  await page.getByRole("button",{name:/Voir les 10 îles/}).click();
  assert.equal(await page.locator(".draft-island-card").count(),9,"claimed island absent from second choice");
  await page.locator(".draft-choose").first().click();
@@ -50,6 +63,14 @@ try{
  const title=await page.locator("#dialog-title").innerText();
  assert.ok(title.includes("conquête"),"start game modal after two island picks, got: "+title);
  await page.getByRole("button",{name:"Jouer"}).click();
+ const initialFocus=await page.evaluate(()=>{
+  const t=window.__ARCHIPEL_TEST,s=t.getState(),b=t.getBoard(),who=s.current;
+  const i=s.islands[s.players[who].boat],boat=b.boatTarget(who,i.id);
+  return {dx:Math.abs(b.center.x-i.x-(boat.x-i.x)*.33),dz:Math.abs(b.center.z-i.z-(boat.z-i.z)*.33)};
+ });
+ assert.ok(initialFocus.dx<.08&&initialFocus.dz<.08,"start camera follows the first active faction "+JSON.stringify(initialFocus));
+ assert.equal(await page.locator(".island-label.violet").count(),1);
+ assert.equal(await page.locator(".island-label.orange").count(),1);
  await page.waitForTimeout(250);
  const current=(await page.locator("#stage-name").textContent())?.trim()||"";
  assert.ok(current.startsWith("Navigation • ")||current.startsWith("Action • ")||current.startsWith("Fin du tour • "),"current turn stage displayed: "+current);
@@ -92,6 +113,16 @@ try{
  assert.ok(!await page.locator("body").evaluate(x=>x.classList.contains("map-only")),"UI restored");
  await page.screenshot({path:"artifacts/archipel-3d-gameplay.png"});
  console.log("PASS: camera zoom, recenter, pan, collapsible dock and map-only restoration");
+ const oldCurrent=await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().current);
+ await page.getByRole("button",{name:/Passer \/ finir le tour/}).click();
+ await page.getByRole("button",{name:"Commencer le tour"}).click();
+ const nextFocus=await page.evaluate(()=>{
+  const t=window.__ARCHIPEL_TEST,s=t.getState(),b=t.getBoard(),who=s.current;
+  const i=s.islands[s.players[who].boat],boat=b.boatTarget(who,i.id);
+  return {current:who,dx:Math.abs(b.center.x-i.x-(boat.x-i.x)*.33),dz:Math.abs(b.center.z-i.z-(boat.z-i.z)*.33)};
+ });
+ assert.equal(nextFocus.current,1-oldCurrent,"other faction takes next turn");
+ assert.ok(nextFocus.dx<.08&&nextFocus.dz<.08,"camera follows the current faction after end-turn "+JSON.stringify(nextFocus));
  // v0.5 tactical confirmation: cancel is safe, accepting actually rolls.
  const target=await page.evaluate(()=>{
   const T=window.__ARCHIPEL_TEST,s=T.getState(),from=s.players[s.current].boat;
