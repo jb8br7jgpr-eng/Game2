@@ -1,12 +1,21 @@
 # ARCHIPEL — Les royaumes des marées 🏝️
 
-**Prototype 3D interactif 0.4** du jeu de plateau miniature imaginé ensemble.
+**Prototype 3D interactif 0.5** du jeu de plateau miniature imaginé ensemble.
 
 ## Jouer
 
 **https://jb8br7jgpr-eng.github.io/Game2/**
 
 Deux joueurs jouent à tour de rôle sur **le même appareil**. Le jeu fonctionne sur un navigateur moderne compatible WebGL 2, avec connexion nécessaire pour charger Three.js depuis le CDN.
+
+### ARCHIPEL 0.5 — plateau plus vaste et décisions de combat
+
+- **Grande carte organique** : archipel agrandi (jusqu’à environ 35 unités de hauteur), îles séparées d’au moins 5 unités, répartition réellement variable à chaque nouvelle partie. Zoom et déplacement de caméra restent nécessaires pour explorer les zones éloignées.
+- **Réseau maritime fiable** : générateur indépendant maintenant chaque île reliée à au moins **2 îles**, généralement **3 ou 4** ; routes renforcées et mise en évidence des connexions disponibles. Vérifié sur 55 générations aléatoires.
+- **Panneau tactique avant toute attaque** : navire et bonus d’attaque, niveau exact des fortifications, +1 si navire défensif sur l’île, plages de forces possibles, **probabilité exacte de victoire sur 36 lancers de dés** et conséquences des résultats. Boutons **Annuler** (sans consommer le tour) / **Attaquer !**.
+- **Caméra plus basse, perspective de trois quarts**, navigation avec suivi doux de caméra, sillages parallèles et canonnade en trajectoire courbe.
+- **Nouveaux détails 3D** : végétation, fleurs, rochers, lagons, reliefs, bâtiments de trois niveaux et silhouettes de navires beaucoup plus distinctes, surtout niveau 3.
+- **Dés 3D conservés à l’identique** à la demande de l’utilisateur.
 
 ### ARCHIPEL 0.4 — nouveaux modèles, perspective, animation et confort
 - **Perspective 3/4 plus basse** sur les reliefs, les remparts et les navires.
