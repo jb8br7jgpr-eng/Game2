@@ -126,10 +126,35 @@ export class Board3D{
   this.canvas.dataset.cameraCenter=this.center.x.toFixed(3)+","+this.center.z.toFixed(3);
   this.positionMarkers();
  }
+ overviewZoom(){
+  if(!this.currentGame||!this.currentGame.islands.length)return .82;
+  // Compute projected extent instead of assuming all randomly generated
+  // islands fit a fixed portrait or landscape rectangle.
+  const currentZoom=this.camera.zoom;
+  this.camera.zoom=1;this.camera.updateProjectionMatrix();this.camera.updateMatrixWorld();
+  let boundX=0,boundY=0;
+  for(const tile of this.currentGame.islands){
+   const projected=v(tile.x,.7,tile.z).project(this.camera);
+   boundX=Math.max(boundX,Math.abs(projected.x));
+   boundY=Math.max(boundY,Math.abs(projected.y));
+  }
+  this.camera.zoom=currentZoom;this.camera.updateProjectionMatrix();
+  return THREE.MathUtils.clamp(Math.min(.76/Math.max(.01,boundX),.59/Math.max(.01,boundY),.91),.17,.91);
+ }
  centerView(){
-  this.center.set(0,0,0);this.scale=.82;
+  this.followPoint=null;this.center.set(0,0,0);
+  this.updateCamera();
+  this.scale=this.overviewZoom();
+  this.resize();
+ }
+ viewIsland(id,zoom=1.25){
+  const tile=this.currentGame?.islands[id];if(!tile)return;
+  this.followPoint=null;
+  this.center.set(tile.x,0,tile.z);
+  this.scale=THREE.MathUtils.clamp(zoom,.17,3.45);
   this.updateCamera();this.resize();
  }
+
  zoomBy(factor){
   const b=this.canvas.getBoundingClientRect();
   this.zoomAt(this.scale*factor,b.left+b.width/2,b.top+b.height/2);
@@ -150,7 +175,7 @@ export class Board3D{
  }
  zoomAt(zoom,clientX,clientY){
   const before=this.groundAt(clientX,clientY);
-  this.scale=THREE.MathUtils.clamp(zoom,.56,3.45);
+  this.scale=THREE.MathUtils.clamp(zoom,.17,3.45);
   this.resize();
   const after=this.groundAt(clientX,clientY);
   if(before&&after){
@@ -278,6 +303,7 @@ export class Board3D{
   this.routeMarks=marks;this.routeGroup.add(marks);
   this.boatModels=[0,1].map(i=>{const p=game.players[i];const g=ship3D(i,p.ship);const berth=p.boat===null?v(0,.34,0):this.boatTarget(i,p.boat);g.position.copy(berth);g.visible=p.boat!==null;this.boatRoot.add(g);return{group:g,level:p.ship,player:i}});
   this.focus(game.selected??-1,game);
+  this.centerView();
  }
  sync(game){
   if(this.currentGame!==game){this.rebuild(game);return}
