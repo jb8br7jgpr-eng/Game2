@@ -187,7 +187,7 @@ export class Board3D{
   this.camera=new THREE.OrthographicCamera(-4,4,9,-9,.1,120);
   this.camera.position.set(0,29,17);this.camera.lookAt(0,0,0);
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
-  this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.7));
+  this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.45));
   this.renderer.outputColorSpace=THREE.SRGBColorSpace;
   this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
   this.renderer.toneMappingExposure=1.18;
@@ -265,6 +265,21 @@ export class Board3D{
   this.camera.left=-halfW;this.camera.right=halfW;this.camera.top=halfH;this.camera.bottom=-halfH;
   this.camera.zoom=this.scale;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h,false);
   this.canvas.dataset.cameraZoom=this.scale.toFixed(3);
+  this.positionMarkers();
+ }
+ positionMarkers(){
+  if(!this.currentGame||!this.markerNodes?.length)return;
+  const w=this.canvas.clientWidth,h=this.canvas.clientHeight;
+  this.currentGame.islands.forEach((tile,i)=>{
+   const marker=this.markerNodes[i];if(!marker)return;
+   const pt=v(tile.x,.5,tile.z).project(this.camera);
+   marker.style.left=((pt.x+1)*.5*w)+"px";
+   marker.style.top=((-pt.y+1)*.5*h)+"px";
+   marker.classList.toggle("active",this.currentGame.selected===i);
+   marker.classList.toggle("violet",tile.owner===0);
+   marker.classList.toggle("orange",tile.owner===1);
+   marker.classList.toggle("offscreen",pt.x < -1.07 || pt.x > 1.07 || pt.y < -1.07 || pt.y > 1.07);
+  });
  }
  updateCamera(){
   this.center.x=THREE.MathUtils.clamp(this.center.x,-6.5,6.5);
@@ -272,6 +287,7 @@ export class Board3D{
   this.camera.position.set(this.center.x,29,this.center.z+17);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   this.canvas.dataset.cameraCenter=this.center.x.toFixed(3)+","+this.center.z.toFixed(3);
+  this.positionMarkers();
  }
  centerView(){
   this.center.set(0,0,0);this.scale=.89;
@@ -474,19 +490,7 @@ export class Board3D{
   const dt=Math.min(.06,this.clock.getDelta()),time=this.clock.elapsedTime;
   this.water.uniforms.time.value=time;
   this.animateWake(dt);
-  if(this.currentGame&&this.markerNodes.length){
-    const w=this.canvas.clientWidth,h=this.canvas.clientHeight;
-    this.currentGame.islands.forEach((tile,i)=>{
-      const vec=v(tile.x,.5,tile.z).project(this.camera);
-      const marker=this.markerNodes[i];
-      marker.style.left=((vec.x+1)*.5*w)+"px";
-      marker.style.top=((-vec.y+1)*.5*h)+"px";
-      marker.classList.toggle("offscreen",vec.x < -1.07 || vec.x > 1.07 || vec.y < -1.07 || vec.y > 1.07);
-      marker.classList.toggle("active",this.currentGame.selected===i);
-      marker.classList.toggle("violet",tile.owner===0);
-      marker.classList.toggle("orange",tile.owner===1);
-    });
-  }
+  this.positionMarkers();
   this.boatModels.forEach((b,i)=>{if(!b)return;const g=b.group;if(!g.userData.inMotion)g.position.y=.35+Math.sin(time*2.5+i*2)*.026;g.rotation.z=Math.sin(time*1.7+i)*.029});
   for(const t of this.tweens.slice()){
    t.elapsed+=dt*1000;const u=Math.min(1,t.elapsed/t.duration),ease=u*u*(3-2*u);
