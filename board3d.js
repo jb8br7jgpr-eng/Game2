@@ -21,7 +21,7 @@ export class Board3D{
   this.canvas=canvas;this.onIsland=onIsland;this.scene=new THREE.Scene();
   this.scene.background=new THREE.Color(0x6eced2);
   this.scene.fog=new THREE.Fog(0x7bd5d5,38,110);
-  this.camera=new THREE.OrthographicCamera(-4,4,9,-9,.1,120);
+  this.camera=new THREE.OrthographicCamera(-4,4,9,-9,.1,680);
   this.camera.position.set(6.5,16.5,30);this.camera.lookAt(0,0,0);
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
   this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.3));
@@ -45,7 +45,7 @@ export class Board3D{
       "uniform float time;uniform vec2 islands[10];varying vec2 seaUv;",
       "float waves(vec2 p){return sin(p.x*2.7+time*.56)*sin(p.y*3.3-time*.66)*.5+.5;}",
       "void main(){",
-      "vec2 world=vec2((seaUv.x-.5)*140.,(.5-seaUv.y)*140.);",
+      "vec2 world=vec2((seaUv.x-.5)*640.,(.5-seaUv.y)*640.);",
       "vec2 p=world;",
       "float slow=sin(p.x*.48+p.y*.3+time*.35)*.5+.5;",
       "float broad=sin(p.y*.91-p.x*.36-time*.40)*.5+.5;",
@@ -71,7 +71,7 @@ export class Board3D{
       "}"
     ].join("\n")
   });
-  const ocean=new THREE.Mesh(new THREE.PlaneGeometry(140,140),this.water);ocean.rotation.x=-Math.PI/2;ocean.position.y=-.15;this.scene.add(ocean);
+  const ocean=new THREE.Mesh(new THREE.PlaneGeometry(640,640),this.water);ocean.rotation.x=-Math.PI/2;ocean.position.y=-.15;this.scene.add(ocean);
   this.islandModels=[];this.boatModels=[null,null];this.routeGroup=new THREE.Group();this.scene.add(this.routeGroup);
   this.islandRoot=new THREE.Group();this.scene.add(this.islandRoot);
   this.boatRoot=new THREE.Group();this.scene.add(this.boatRoot);
