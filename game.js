@@ -8,38 +8,65 @@ export const ISLANDS=[
   ["Calyssé","ruins"],["Orémis","cliff"],["Syléora","forest"],["Valcéria","volcano"],
   ["Iskaria","arch"],["Ondélys","mist"]
 ];
-const SLOTS=[
-  [-2.42,-5.72],[2.44,-5.55],[-2.32,-2.75],[2.57,-2.60],[-2.53,-0.12],
-  [2.40,0.18],[-2.58,2.60],[2.31,2.77],[-2.18,5.55],[2.37,5.65]
-];
+// Natural placement: Poisson-disc inspired sampling in an oval archipelago.
+const FALLBACK=[[-4.5,-6.4],[.1,-7.4],[4.6,-5.8],[-2.5,-3.3],[3.3,-2.0],[-4.6,.1],[.1,1.0],[4.7,2.2],[-2.8,5.4],[2.5,7.1]];
+export function makePositions(rng=Math.random){
+ const points=[];
+ for(let tries=0;tries<5000&&points.length<10;tries++){
+  const a=rng()*Math.PI*2,r=Math.sqrt(rng());
+  const x=Math.cos(a)*r*5.85,z=Math.sin(a)*r*7.65;
+  if(points.every(p=>Math.hypot(p[0]-x,p[1]-z)>=3.25))points.push([x,z]);
+ }
+ // On the very rare failed sample, use an irregular seeded formation.
+ if(points.length<10)return FALLBACK.map(p=>[p[0]+(rng()-.5)*.8,p[1]+(rng()-.5)*.8]);
+ return points;
+}
 function mix(a,rng=Math.random){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 const dice=(rng)=>1+Math.floor(rng()*6);
 export function makeEdges(tiles){
-  const distances=[];
-  for(let i=0;i<tiles.length;i++)for(let j=i+1;j<tiles.length;j++){
-    const d=Math.hypot(tiles[i].x-tiles[j].x,tiles[i].z-tiles[j].z);
-    distances.push({i,j,d});
-  }
-  const sorted=distances.sort((a,b)=>a.d-b.d),edges=[],used=new Set([0]);
-  const has=(i,j)=>edges.some(e=>e[0]===i&&e[1]===j||e[0]===j&&e[1]===i);
-  for(let n=0;n<tiles.length-1;n++){
-    const e=sorted.find(e=>used.has(e.i)!==used.has(e.j));if(!e)break;
-    edges.push([e.i,e.j]);used.add(e.i);used.add(e.j);
-  }
+ const lengths=[];
+ for(let i=0;i<tiles.length;i++)for(let j=i+1;j<tiles.length;j++){
+  lengths.push({i,j,d:Math.hypot(tiles[i].x-tiles[j].x,tiles[i].z-tiles[j].z)});
+ }
+ lengths.sort((a,b)=>a.d-b.d);
+ const edges=[],used=new Set([0]);
+ const has=(i,j)=>edges.some(e=>e[0]===i&&e[1]===j||e[0]===j&&e[1]===i);
+ const degree=i=>edges.filter(e=>e.includes(i)).length;
+ const crosses=(a,b)=>{
+  const A=tiles[a.i],B=tiles[a.j],C=tiles[b[0]],D=tiles[b[1]];
+  if(a.i===b[0]||a.i===b[1]||a.j===b[0]||a.j===b[1])return false;
+  const cross=(p,q,r)=>(q.x-p.x)*(r.z-p.z)-(q.z-p.z)*(r.x-p.x);
+  return cross(A,B,C)*cross(A,B,D)<0&&cross(C,D,A)*cross(C,D,B)<0;
+ };
+ // Connect every island, then introduce alternate routes without a grid layout.
+ while(used.size<tiles.length){
+  const e=lengths.find(e=>used.has(e.i)!==used.has(e.j));
+  if(!e)break;edges.push([e.i,e.j]);used.add(e.i);used.add(e.j);
+ }
+ for(let pass=0;pass<2;pass++){
   for(let i=0;i<tiles.length;i++){
-    while(edges.filter(e=>e.includes(i)).length<2){
-      const e=sorted.find(e=>(e.i===i||e.j===i)&&!has(e.i,e.j));
-      if(!e)break;edges.push([e.i,e.j]);
-    }
+   while(degree(i)<3){
+    const e=lengths.find(e=>(e.i===i||e.j===i)&&!has(e.i,e.j)&&
+      degree(e.i)<6&&degree(e.j)<6&&(!pass?edges.every(b=>!crosses(e,b)):true));
+    if(!e)break;edges.push([e.i,e.j]);
+   }
   }
-  // A few crossing routes improve tactical flanking opportunities.
-  for(const e of sorted)if(edges.length<15&&!has(e.i,e.j)&&e.d<5.5)edges.push([e.i,e.j]);
-  return edges;
+ }
+ // 18–21 connections, balancing tactical choices and legible sea lanes.
+ for(const allowCross of [false,true]){
+  for(const e of lengths){
+   if(edges.length>=20)break;
+   if(has(e.i,e.j)||degree(e.i)>=5||degree(e.j)>=5)continue;
+   if(!allowCross&&edges.some(b=>crosses(e,b)))continue;
+   edges.push([e.i,e.j]);
+  }
+ }
+ return edges;
 }
 export function newGame(rng=Math.random){
-  const places=mix(SLOTS,rng);
+  const places=mix(makePositions(rng),rng);
   const islands=ISLANDS.map(([name,theme],i)=>({
-    id:i,name,theme,x:places[i][0]*1.14+(rng()-.5)*.32,z:places[i][1]*1.17+(rng()-.5)*.32,
+    id:i,name,theme,x:places[i][0],z:places[i][1],
     wood:1+Math.floor(rng()*3),stone:1+Math.floor(rng()*3),owner:null,level:0
   }));
   return {
