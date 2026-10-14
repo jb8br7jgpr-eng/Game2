@@ -3,7 +3,7 @@ import {dockPosition,ISLAND_VISUAL_RADIUS} from "../docks-v06.js";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {newGame,makeEdges,owned,score,connected,neighborIds,rollForStart,chooseStart,
- canNavigate,canAttack,previewAttack,navigate,colonize,upgradeShip,upgradeIsland,attack,
+ canNavigate,canAttack,previewAttack,navigate,colonize,previewColonization,upgradeShip,upgradeIsland,attack,
  refugeOptions,retreat,finishTurn,beginTurn} from "../game.js";
 
 function rng(seed=1143){return()=>((seed=(Math.imul(1664525,seed)+1013904223)>>>0)/4294967296)}
@@ -66,6 +66,34 @@ for(let seed=1;seed<=110;seed++){
  shapes.add(Math.round(width/height*5)/5);
 }
 assert.ok(shapes.size>=3,"multiple distinct archipelago silhouettes across new games");
+// v0.7: each neutral island is visible with difficulty 3–5 and is not free.
+for(let seed=1;seed<=95;seed++){
+ const map=newGame(rng(seed*89));
+ for(const tile of map.islands)assert.ok(tile.difficulty>=3&&tile.difficulty<=5);
+}
+const expedition=newGame(rng(94));
+rollForStart(expedition,(()=>{const vals=[.96,.04];return()=>vals.shift()??.3})());
+chooseStart(expedition,0);chooseStart(expedition,1);
+const expOrigin=expedition.players[expedition.current].boat;
+const expId=neighborIds(expedition,expOrigin).find(i=>expedition.islands[i].owner===null);
+assert.ok(expId!==undefined,"neutral expedition neighbor available");
+navigate(expedition,expId);
+const expPreview=previewColonization(expedition);
+assert.ok([3,4,5].includes(expPreview.difficulty));
+assert.equal(expPreview.successPercent,Math.round(expPreview.winningSides/6*100));
+const expFailure=colonize(expedition,()=>0);
+assert.equal(expFailure.type,"expedition");
+assert.equal(expFailure.success,false);
+assert.equal(expedition.islands[expId].owner,null);
+assert.equal(expedition.actionUsed,true);
+assert.equal(expedition.players[expedition.current].boat,expId);
+assert.throws(()=>colonize(expedition),/indisponible|impossible/i);
+finishTurn(expedition);finishTurn(expedition); // the other faction plays, then retry next own turn
+assert.equal(expedition.actionUsed,false);
+assert.equal(expedition.players[expedition.current].boat,expId);
+const expSuccess=colonize(expedition,()=>.9999);
+assert.equal(expSuccess.success,true);
+assert.equal(expedition.islands[expId].owner,expedition.current);
 const roll=rollForStart(s,(()=>{const x=[.92,.04];return()=>x.shift()})());
 assert.equal(roll.winner,0);
 chooseStart(s,0);assert.equal(s.chooser,1);
@@ -81,7 +109,7 @@ assert.equal(s.players[1].boat,nearby);
 assert.equal(s.moveUsed,true);
 assert.equal(canNavigate(s,first),false);
 s.treasure=-1;
-const col=colonize(s);assert.equal(col.type,"colonize");assert.equal(owned(s,1).length,2);
+const col=colonize(s,()=>.99999);assert.equal(col.type,"colonize");assert.equal(owned(s,1).length,2);
 assert.equal(score(s,1),2);
 assert.equal(finishTurn(s).type,"turn");assert.equal(s.current,0);
 const p=s.players[s.current];
