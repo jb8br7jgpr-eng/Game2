@@ -2,8 +2,8 @@ import {
  FACTIONS,newGame,connected,owned,score,rollForStart,chooseStart,
  beginTurn,canNavigate,canAttack,previewAttack,navigate,colonize,upgradeShip,upgradeIsland,
  attack,refugeOptions,retreat,finishTurn
-} from "./game.js?v=20261014-06";
-import {Board3D} from "./board3d.js?v=20261014-06";
+} from "./game.js?v=20261014-06f";
+import {Board3D} from "./board3d.js?v=20261014-06f";
 import {animateDice} from "./dice-v04.js";
 const $=id=>document.getElementById(id);
 let state=newGame(),locked=false;
