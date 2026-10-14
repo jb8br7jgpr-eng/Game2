@@ -115,6 +115,41 @@ try{
  const spent=await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().actionUsed);
  assert.equal(spent,true,"confirmed attack consumes exactly one action");
  console.log("PASS: attack preview, accurate forces, cancel without mutation, confirmed dice combat");
+ // V0.7: defensive retreat is selected from luminous islands, not name-only buttons.
+ await page.evaluate(()=>{
+  document.getElementById("dialog").classList.remove("active");
+  const T=window.__ARCHIPEL_TEST,s=T.getState();
+  s.stage="retreat";s.actionUsed=true;s.moveUsed=true;
+  T.refresh();T.pickRefuge();
+ });
+ const highlighted=page.locator(".island-label.retreat-target");
+ await highlighted.first().waitFor({timeout:7000});
+ assert.ok(await highlighted.count()>=1,"eligible retreat islands glow");
+ const markers=await page.evaluate(()=>window.__ARCHIPEL_TEST.getBoard().refugeMarkers.children.length);
+ assert.ok(markers>=2,"3D luminous circles mark available destinations");
+ await highlighted.first().click({timeout:7000});
+ await page.getByRole("heading",{name:/Repli vers/}).waitFor({timeout:7000});
+ await page.getByRole("button",{name:/Confirmer le refuge/}).click();
+ await page.waitForFunction(()=>window.__ARCHIPEL_TEST.getState().stage==="play",{timeout:7000});
+ assert.equal(await page.locator(".island-label.retreat-target").count(),0,"highlight removed after confirmed retreat");
+ console.log("PASS: glowing map-based retreat, tap confirmation and animated refuge");
+ // V0.7: failure consumes action and an unsuccessful roll cannot found a village.
+ await page.evaluate(()=>{
+  const T=window.__ARCHIPEL_TEST,s=T.getState();
+  const tile=s.islands.find(i=>i.owner===null);
+  s.stage="play";s.actionUsed=false;s.moveUsed=false;s.players[s.current].boat=tile.id;
+  s.selected=tile.id;tile.difficulty=5;
+  window.__failedOriginalRandom=Math.random;Math.random=()=>0;T.refresh();
+ });
+ await page.evaluate(()=>window.__ARCHIPEL_TEST.doColonize());
+ await page.getByRole("heading",{name:/Expédition repoussée/}).waitFor({timeout:9000});
+ assert.equal(await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().actionUsed),true);
+ assert.ok(await page.evaluate(()=>{
+  const s=window.__ARCHIPEL_TEST.getState();return s.islands[s.players[s.current].boat].owner===null;
+ }),"island remains neutral after failed scouting");
+ await page.getByRole("button",{name:/Terminer ce tour/}).click();
+ await page.evaluate(()=>{Math.random=window.__failedOriginalRandom});
+ console.log("PASS: failed expedition dice preserve neutral island and spend action");
  // V0.6 treasure: force a neutral discovery, verify animated 3D chest & exact gift.
  await page.evaluate(()=>{
   document.getElementById("dialog").classList.remove("active");
@@ -125,9 +160,12 @@ try{
   s.players[s.current].boat=island.id;
   s.treasure=island.id;s.treasureFound=false;
   window.__treasureOriginalRandom=Math.random;
-  Math.random=()=>0; // uniform reward category selects 'cargo'
+  let rollNumber=0; Math.random=()=>++rollNumber===1?.9999:0; // succeed on the die, then choose cargo
   T.refresh();
  });
+ // The neutral island can be attempted only with its visible difficulty.
+ const preview=await page.evaluate(()=>window.__ARCHIPEL_TEST.getState().islands.find(i=>i.owner===null)?.difficulty);
+ assert.ok(preview>=3&&preview<=5);
  await page.evaluate(()=>window.__ARCHIPEL_TEST.doColonize());
  await page.getByRole("heading",{name:/Trésor découvert sur/}).waitFor({timeout:14000});
  assert.ok(await page.locator(".treasure-reveal.cargo").isVisible(),"specific treasure type and card are visible");
