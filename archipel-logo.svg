@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-labelledby="title desc">
+<title id="title">ARCHIPEL — emblème du compas et des marées</title>
+<desc id="desc">Une rose des vents dorée sur l'océan turquoise, entourée des deux factions violette et orangée</desc>
+<defs>
+ <radialGradient id="sea"><stop stop-color="#176b81"/><stop offset=".72" stop-color="#09334e"/><stop offset="1" stop-color="#071726"/></radialGradient>
+ <linearGradient id="metal" x1="0" x2="1" y2="1"><stop stop-color="#fff0bb"/><stop offset=".37" stop-color="#e3b65c"/><stop offset=".68" stop-color="#a96c33"/><stop offset="1" stop-color="#fee3a6"/></linearGradient>
+ <linearGradient id="sail" x1="0" x2="1"><stop stop-color="#985ce1"/><stop offset=".49" stop-color="#bd9ae9"/><stop offset="1" stop-color="#e49b42"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="5"/></filter>
+</defs>
+<circle cx="200" cy="200" r="187" fill="#051c2c" stroke="#d0a15d" stroke-width="5"/>
+<circle cx="200" cy="200" r="176" fill="url(#sea)" stroke="#f3d48c" stroke-width="2"/>
+<g fill="none" stroke="#e5bd70" opacity=".7">
+<circle cx="200" cy="200" r="151" stroke-width="2"/><circle cx="200" cy="200" r="142" stroke-dasharray="2 10" stroke-width="3"/><circle cx="200" cy="200" r="105"/>
+</g>
+<g fill="url(#metal)" stroke="#664629" stroke-width="2">
+<path d="M200 21 220 157 200 198 180 157Z"/><path d="M200 379 220 244 200 202 180 244Z"/>
+<path d="M21 200 157 180 198 200 157 220Z"/><path d="M379 200 244 180 202 200 244 220Z"/>
+<path d="M79 79 178 156 190 190 156 178Z"/><path d="M321 321 222 244 210 210 244 222Z"/>
+<path d="M321 79 244 178 210 190 222 156Z"/><path d="M79 321 156 222 190 210 178 244Z"/>
+</g>
+<circle cx="200" cy="200" r="93" fill="#0b3c55" stroke="#e7bf78" stroke-width="5"/>
+<circle cx="200" cy="200" r="86" fill="none" stroke="#60c3c7" opacity=".65" stroke-width="2"/>
+<path d="M117 244q36-18 72 0t75 0q25-12 45-5M119 256q38-18 75 0t75 0q25-10 40-5M133 269q30-11 66 3t65-2" fill="none" stroke="#6ed1d1" stroke-width="8" stroke-linecap="round" opacity=".85"/>
+<path d="M197 118 197 232 269 232" fill="none" stroke="url(#metal)" stroke-width="8" stroke-linejoin="round"/>
+<path d="M188 130Q139 169 157 218L187 218Z" fill="#aa76d3" stroke="#f3d49b" stroke-width="3"/>
+<path d="M207 134Q263 180 262 221L207 221Z" fill="#edaa52" stroke="#f7dca3" stroke-width="3"/>
+<path d="M153 233Q199 244 270 228Q255 258 210 258L173 254Z" fill="#d69b59" stroke="#ffe0a8" stroke-width="4"/>
+<path d="M145 207L147 223M276 210 277 223" stroke="#ffebbb" stroke-width="3"/>
+<circle cx="200" cy="200" r="6" fill="#fff3cb"/>
+<g fill="#f6dca4"><circle cx="200" cy="51" r="5"/><circle cx="349" cy="200" r="5"/><circle cx="200" cy="349" r="5"/><circle cx="51" cy="200" r="5"/></g>
+</svg>
