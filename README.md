@@ -1,12 +1,23 @@
 # ARCHIPEL — Les royaumes des marées 🏝️
 
-**Prototype 3D interactif 0.5** du jeu de plateau miniature imaginé ensemble.
+**Prototype 3D interactif 0.6** du jeu de plateau miniature imaginé ensemble.
 
 ## Jouer
 
 **https://jb8br7jgpr-eng.github.io/Game2/**
 
 Deux joueurs jouent à tour de rôle sur **le même appareil**. Le jeu fonctionne sur un navigateur moderne compatible WebGL 2, avec connexion nécessaire pour charger Three.js depuis le CDN.
+
+### ARCHIPEL 0.6 — dioramas unifiés, archipels uniques et trésor spectaculaire
+
+- **Bateaux hors des îles** : mouillages calculés côté mer, éloignés des côtes et des îles voisines, adaptés à tous les niveaux de bateau, y compris après une navigation ou un combat.
+- **Nouvelle modélisation 3D cohérente** : les anciennes géométries empilées ont été remplacées par **un modèle construit d’un seul tenant** pour chaque île et chaque navire, avec une identité visuelle de chaque thème et de chaque niveau de construction.
+- **Cinq formes aléatoires d’archipel** : atoll, croissant, chapelet, constellation et deux baies, avec orientation et emplacements différents, et des espaces maritimes élargis entre chaque île.
+- **Routes tactiques conservées** : chaque île garde plusieurs connexions et l’ensemble reste atteignable malgré l’agrandissement.
+- **Caméra et interface de départ adaptées** : bouton Vue d’ensemble calculé automatiquement pour la forme actuelle ; menu des dix îles avec leurs ressources et boutons pour observer ou choisir un territoire, même très éloigné de la caméra.
+- **Trésor spectaculaire** : animation de coffre 3D avec ouverture du couvercle, particules dorées, zoom, objets-récompenses, puis fiche persistante indiquant exactement les ressources, l'amélioration navire ou les fortifications gagnées.
+- **Océan étendu jusqu’aux limites de la caméra** pour éviter les bords visibles pendant les dézooms très importants.
+- **Dés 3D et règles du combat inchangés**.
 
 ### ARCHIPEL 0.5 — plateau plus vaste et décisions de combat
 
