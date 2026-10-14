@@ -354,6 +354,9 @@ export class Board3D{
     marker.className="island-label";
     marker.innerHTML='<b>'+t.name+'</b><span>🌲 '+t.wood+'&nbsp; 🪨 '+t.stone+'</span>';
     marker.setAttribute("aria-label",t.name+", "+t.wood+" bois et "+t.stone+" pierres par tour");
+    marker.addEventListener("click",()=>{
+     if(this.currentGame?.stage==="retreat"&&this.retreatTargets.includes(t.id))this.onIsland(t.id);
+    });
     this.markers.appendChild(marker);this.markerNodes.push(marker);
    });
   }
