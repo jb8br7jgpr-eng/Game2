@@ -45,21 +45,28 @@ try{
  assert.ok(current.startsWith("À "),"correct turn displayed");
  assert.equal(await page.locator(".island-label").count(),10);
  
- // V0.3 usability: camera zoom + reset, pannable map, collapsible dock, full map.
- const marker=page.locator(".island-label").nth(4);
- const initial=await marker.boundingBox();
- await page.getByRole("button",{name:"Zoom avant"}).click();
- const closer=await marker.boundingBox();
- assert.ok(Math.abs(closer.x-initial.x)>1||Math.abs(closer.y-initial.y)>1,"zoom reprojects island labels");
- await page.getByRole("button",{name:"Recentrer la carte"}).click();
- const centered=await marker.boundingBox();
- assert.ok(Math.abs(centered.x-initial.x)<2&&Math.abs(centered.y-initial.y)<2,"recenter restores camera view");
+ // V0.3 camera and user-experience smoke tests use numeric camera state,
+ // rather than label positions affected by Safari/WebGL frame scheduling.
  const canvas=page.locator("#world");
- await page.mouse.move(225,440);await page.mouse.down();
- await page.mouse.move(270,465,{steps:8});await page.mouse.up();
- const dragged=await marker.boundingBox();
- assert.ok(Math.abs(dragged.x-centered.x)>3||Math.abs(dragged.y-centered.y)>3,"one-finger drag pans camera");
+ const zoomStart=Number(await canvas.getAttribute("data-camera-zoom"));
+ await page.getByRole("button",{name:"Zoom avant"}).click();
+ const zoomed=Number(await canvas.getAttribute("data-camera-zoom"));
+ assert.ok(zoomed>zoomStart,"zoom-in changes orthographic camera zoom");
+ await page.getByRole("button",{name:"Zoom arrière"}).click();
+ const zoomedOut=Number(await canvas.getAttribute("data-camera-zoom"));
+ assert.ok(zoomedOut<zoomed,"zoom-out changes camera zoom");
  await page.getByRole("button",{name:"Recentrer la carte"}).click();
+ assert.ok(Math.abs(Number(await canvas.getAttribute("data-camera-zoom"))-.89)<.015,"recenter restores initial zoom");
+ const initialCenter=await canvas.getAttribute("data-camera-center");
+ const canvasRect=await canvas.boundingBox();
+ await page.mouse.move(canvasRect.x+canvasRect.width*.50,canvasRect.y+canvasRect.height*.49);
+ await page.mouse.down();
+ await page.mouse.move(canvasRect.x+canvasRect.width*.67,canvasRect.y+canvasRect.height*.56,{steps:10});
+ await page.mouse.up();
+ const shiftedCenter=await canvas.getAttribute("data-camera-center");
+ assert.notEqual(shiftedCenter,initialCenter,"dragging pans camera to another island area");
+ await page.getByRole("button",{name:"Recentrer la carte"}).click();
+ assert.equal(await canvas.getAttribute("data-camera-center"),"0.000,0.000","recenter resets camera position");
  await page.getByRole("button",{name:"Masquer le menu d’actions"}).click();
  assert.ok(await page.locator("body").evaluate(x=>x.classList.contains("dock-closed")),"dock closed");
  await page.getByRole("button",{name:"Afficher le menu d’actions"}).click();
@@ -71,38 +78,7 @@ try{
  await page.getByRole("button",{name:"Réafficher l’interface"}).click();
  assert.ok(!await page.locator("body").evaluate(x=>x.classList.contains("map-only")),"UI restored");
  await page.screenshot({path:"artifacts/archipel-3d-gameplay.png"});
- console.log("PASS: interactive camera zoom, recenter, drag/pan, collapsible dock and map-only restoration");
-
- // v0.3: camera controls, touch-like drag, hide/show UI, return to overview.
- const labelA=page.locator(".island-label").nth(1);
- const posA0=await labelA.boundingBox();
- await page.locator("#zoom-in").click();
- await page.waitForTimeout(300);
- const posA1=await labelA.boundingBox();
- assert.ok(posA0&&posA1&&Math.abs(posA0.x-posA1.x)+Math.abs(posA0.y-posA1.y)>1,"zoom button changes world projection");
- await page.locator("#zoom-out").click();
- await page.locator("#recenter").click();
- const canvasRect=await page.locator("#world").boundingBox();
- const beforeDrag=await labelA.boundingBox();
- await page.mouse.move(canvasRect.x+canvasRect.width*.50,canvasRect.y+canvasRect.height*.49);
- await page.mouse.down();
- await page.mouse.move(canvasRect.x+canvasRect.width*.66,canvasRect.y+canvasRect.height*.54,{steps:7});
- await page.mouse.up();
- await page.waitForTimeout(200);
- const afterDrag=await labelA.boundingBox();
- assert.ok(beforeDrag&&afterDrag&&Math.abs(beforeDrag.x-afterDrag.x)+Math.abs(beforeDrag.y-afterDrag.y)>5,"camera drag pans archipelago");
- await page.locator("#recenter").click();
- await page.locator("#toggle-actions").click();
- assert.ok(await page.locator("body").evaluate(n=>n.classList.contains("dock-closed")),"action panel collapses");
- await page.locator("#toggle-actions").click();
- assert.ok(!(await page.locator("body").evaluate(n=>n.classList.contains("dock-closed"))),"action panel reopens");
- await page.locator("#view-only").click();
- assert.ok(await page.locator("body").evaluate(n=>n.classList.contains("map-only")),"map-only mode enabled");
- assert.ok(await page.locator("#restore-ui").isVisible(),"restore menu stays visible");
- await page.screenshot({path:"artifacts/archipel-v03-map-only.png"});
- await page.locator("#restore-ui").click();
- assert.ok(!(await page.locator("body").evaluate(n=>n.classList.contains("map-only"))),"full UI restored");
- console.log("PASS: zoom buttons, pan drag, recenter, action dock and map-only restoration");
+ console.log("PASS: camera zoom, recenter, pan, collapsible dock and map-only restoration");
  assert.deepEqual(errors,[],"No uncaught JavaScript errors");
  console.log("PASS: touch a pair of 3D islands, draft, HUD, 10 resource markers, no JS errors");
 }finally{await browser?.close();server.kill("SIGTERM")}
