@@ -93,6 +93,16 @@ try{
  });
  assert.ok(cam<.15,"camera follows next player after synced handoff: "+cam);
  await host.screenshot({path:"artifacts/archipel-online-gameplay.png"});
+ // A phone refresh must recover its room, private seat and latest turn.
+ await acting.reload({waitUntil:"domcontentloaded"});
+ await acting.waitForFunction(()=>{
+  const t=window.__ARCHIPEL_TEST;
+  return t?.getState()?.stage==="play"&&document.getElementById("online-lobby")?.hidden===true;
+ },{timeout:25000});
+ assert.deepEqual(await acting.evaluate(()=>window.__ARCHIPEL_TEST.getState().players.map(p=>p.name)),[purple,amber],
+  "reloaded phone reconnects to the same two named factions");
+ assert.equal(await acting.evaluate(()=>window.__ARCHIPEL_TEST.getState().current),1-playing.current,
+  "reconnected phone receives the latest authoritative turn");
  assert.deepEqual(errors,[],"Both mobile browsers have no JavaScript exceptions");
  console.log("PASS: true 2-iPhone GUI multiplayer room, invitation URL, both dice, synced drafting, guarded turns and camera follow");
 }finally{await browser?.close();server.kill("SIGTERM")}
