@@ -2,8 +2,9 @@ import {
  FACTIONS,newGame,connected,owned,score,rollForStart,chooseStart,
  beginTurn,canNavigate,canAttack,navigate,colonize,upgradeShip,upgradeIsland,
  attack,refugeOptions,retreat,finishTurn
-} from "./game.js?v=20261014-03";
-import {Board3D} from "./board3d.js?v=20261014-03";
+} from "./game.js?v=20261014-04";
+import {Board3D} from "./board3d.js?v=20261014-04";
+import {animateDice} from "./dice-v04.js";
 const $=id=>document.getElementById(id);
 let state=newGame(),locked=false;
 const ICONS={Vélyra:"☾",Auréon:"☀"};
@@ -41,6 +42,18 @@ function button(text,func,enabled=true,skin=""){
 }
 function updateHud(){
  const stage=state.stage;
+ const acting=stage==="draft"?state.chooser:stage==="play"||stage==="retreat"?state.current:null;
+ document.body.dataset.faction=acting===1?"aureon":acting===0?"velyra":"neutral";
+ const steps=$("turn-steps");
+ steps.classList.toggle("hidden",stage!=="play");
+ if(stage==="play"){
+  const step=state.actionUsed?3:state.moveUsed?2:1;
+  steps.querySelectorAll(".turn-step").forEach(node=>{
+   const n=Number(node.dataset.step);
+   node.classList.toggle("active",n===step);
+   node.classList.toggle("complete",n<step);
+  });
+ }
  $("round").textContent=stage==="play"||stage==="retreat"?"TOUR "+Math.min(22,player().turns+1)+" / 22":stage==="ended"?"PARTIE TERMINÉE":"PRÉPARATION";
  state.players.forEach((p,i)=>{
   const node=$("team-"+i),active=(stage==="play"&&state.current===i)||(stage==="draft"&&state.chooser===i);
@@ -56,9 +69,9 @@ function updateHud(){
  if(stage==="draft"){stageName.textContent=name(state.chooser)+" choisit son île";caption.textContent="Touchez une île libre.";guide.textContent="Les ressources sont visibles pour chaque île."}
  if(stage==="play"){
   const p=player(),tile=currentIsland();
-  stageName.textContent="À "+p.name+" de jouer";
+  stageName.textContent=state.actionUsed?"Fin du tour • "+p.name:state.moveUsed?"Action • "+p.name:"Navigation • "+p.name;
   caption.textContent=(state.moveUsed?"⛵ Navigation effectuée":"⛵ 1 déplacement disponible")+"  ·  "+(state.actionUsed?"✓ Action utilisée":"✦ 1 action disponible");
-  guide.textContent=tile?.owner===null?"Île neutre : colonise-la !":!state.moveUsed?"Touchez une île reliée pour naviguer, ou sélectionnez une île ennemie.":"Choisis ton action ou termine ton tour.";
+  guide.textContent=state.actionUsed?"Action terminée : passe au joueur suivant.":tile?.owner===null?"Île neutre : colonise-la !":!state.moveUsed?"Navigue vers une île voisine (facultatif), ou agis depuis ton port.":"Sélectionne ton action, puis termine le tour.";
  }
  if(stage==="retreat"){stageName.textContent="Retraite !";caption.textContent="Choisis un refuge pour le défenseur.";guide.textContent="Le navire ne perd aucun niveau."}
  if(stage==="ended"){stageName.textContent=state.winner===null?"Match nul":name(state.winner)+" remporte la partie";caption.textContent="L'archipel attend une revanche.";guide.textContent="Partie terminée."}
@@ -80,7 +93,7 @@ function updateHud(){
   actions.appendChild(button("⛵ &nbsp; Navire <small>"+shipCost+" 🌲</small>",doShip,!state.actionUsed&&p.ship<3&&p.wood>=shipCost,"violet"));
   actions.appendChild(button("🏰 &nbsp; Ville <small>"+townCost+" 🪨</small>",doFort,!state.actionUsed&&tile.level<2&&p.stone>=townCost,"soft"));
  }
- actions.appendChild(button("Fin du tour ↗",nextTurn,true,"outline"));
+ actions.appendChild(button(state.actionUsed?"✓ Finir le tour →":"Passer / finir le tour →",nextTurn,true,"outline"));
 }
 function escapeHTML(s){return s.replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
 function refresh(){board.sync(state);updateHud()}
@@ -89,7 +102,7 @@ function reset(){
  modal({icon:"🏝️",title:"Bienvenue dans ARCHIPEL",text:"Deux factions rivales, dix îles et une mer pleine de surprises. Pince pour zoomer, glisse pour explorer, ou masque l’interface pour admirer ton archipel.",buttons:[{label:"Découvrir l'archipel",click:()=>{}}]});
 }
 async function onIsland(id){
- if(locked)return;
+ if(locked||dialog.classList.contains("active"))return;
  const t=state.islands[id];
  if(state.stage==="roll"){toast("Commence par lancer les dés.");return}
  if(state.stage==="draft"){
@@ -120,17 +133,23 @@ async function onIsland(id){
  else if(t.owner===1-state.current)toast("Île ennemie : une attaque doit partir d'une île directement reliée.");
  else toast("Cette île n'est pas directement reliée à ton navire.");
 }
-function doRoll(){
- if(locked)return;
- try{
-  const e=rollForStart(state);refresh();
-  modal({icon:"🎲",title:"Le destin a parlé !",
-   text:name(e.winner)+" choisira son île en premier. L'autre faction jouera le premier tour.",
-   special:'<div class="dice-row"><div class="die purple spin">'+e.dice[0]+'</div><span class="dice-vs">VS</span><div class="die amber spin">'+e.dice[1]+'</div></div><p class="dice-legend">Vélyra &nbsp;•&nbsp; Auréon</p>',
-   buttons:[{label:"Choisir son île",click:()=>{}}]
-  });
- }catch(e){toast(e.message)}
+function revealDiceButton(label,click){
+ const btn=document.createElement("button");
+ btn.type="button";btn.className="dialog-button";btn.textContent=label;
+ btn.addEventListener("click",()=>{dialog.classList.remove("active");click?.()});
+ dialogButtons.appendChild(btn);
 }
+async function doRoll(){
+ if(locked)return;locked=true;
+ try{
+  const event=rollForStart(state);refresh();
+  modal({icon:"🎲",title:"Le destin des marées",text:"Deux dés miniatures vont déterminer qui choisit sa première île.",special:'<div id="dice-stage"></div>',buttons:[]});
+  await animateDice($("dice-stage"),event.dice,[0,1]);
+  dialogText.textContent="Vélyra : "+event.dice[0]+" • Auréon : "+event.dice[1]+". "+name(event.winner)+" choisit en premier. L'autre faction jouera en premier.";
+  revealDiceButton("Choisir son île",()=>{});
+ }catch(e){toast(e.message)}finally{locked=false}
+}
+
 function doColonize(){
  if(locked)return;try{
  const e=colonize(state);refresh();
@@ -152,21 +171,28 @@ async function playBattle(id){
  if(locked)return;locked=true;
  try{
   const result=attack(state,id);
-  // Animate the physical pieces BEFORE replacing them with post-combat models.
-  updateHud();await board.battleMotion(result);
+  // Cannon approach, curling sea trail and impact precede the tangible 3D dice.
+  updateHud();
+  await board.battleMotion(result);
   refresh();
   const a=result.attackerTotal,d=result.defenderTotal;
-  const footer=result.win?"L'île est conquise, et ses fortifications perdent un niveau.":"Défaite : le bateau bat en retraite et perd un niveau. Une égalité favorise le défenseur.";
-  modal({icon:result.win?"⚔️":"🛡️",title:result.win?"L'île est conquise !":"Attaque repoussée !",
-   text:footer,
-   special:'<div class="dice-row"><div class="dice-result"><div class="die '+(result.attacker===0?"purple":"amber")+' spin">'+result.attackerDice+'</div><div class="dice-score">'+result.attackerDice+' + '+(a-result.attackerDice)+' = <b>'+a+'</b></div></div><span class="dice-vs">VS</span><div class="dice-result"><div class="die '+(result.defender===0?"purple":"amber")+' spin">'+result.defenderDice+'</div><div class="dice-score">'+result.defenderDice+' + '+(d-result.defenderDice)+' = <b>'+d+'</b></div></div></div>',
-   buttons:[{label:result.win?"Continuer":"Reprendre la mer",click:()=>{
-    if(result.domination)showEnding();
-    else if(state.stage==="retreat")pickRefuge();
-   }}]
+  modal({icon:"🎲",title:"Bataille de "+state.islands[id].name,
+   text:"Le destin se joue aux dés : "+name(result.attacker)+" attaque, "+name(result.defender)+" défend.",
+   special:'<div id="dice-stage"></div><div class="battle-scores" id="battle-scores" aria-live="polite"></div>',
+   buttons:[]});
+  await animateDice($("dice-stage"),[result.attackerDice,result.defenderDice],[result.attacker,result.defender]);
+  const notes=result.win?"La conquête est réussie ! Les fortifications ennemies reculent d'un niveau.":"Attaque repoussée. Le bateau attaquant recule et perd un niveau. Les égalités favorisent le défenseur.";
+  dialogIcon.textContent=result.win?"🏆":"🛡️";
+  dialogTitle.textContent=result.win?"Victoire de "+name(result.attacker)+" !":"La défense tient bon !";
+  dialogText.textContent=notes;
+  $("battle-scores").innerHTML='<span class="battle-attacker">'+name(result.attacker)+": "+result.attackerDice+" + "+(a-result.attackerDice)+" = <b>"+a+'</b></span><span class="battle-defender">'+name(result.defender)+": "+result.defenderDice+" + "+(d-result.defenderDice)+" = <b>"+d+"</b></span>";
+  revealDiceButton(result.win?"Continuer":"Reprendre la mer",()=>{
+   if(result.domination)showEnding();
+   else if(state.stage==="retreat")pickRefuge();
   });
  }catch(ex){toast(ex.message)}finally{locked=false;refresh()}
 }
+
 function pickRefuge(){
  const opts=refugeOptions(state);
  if(!opts.length)return;
