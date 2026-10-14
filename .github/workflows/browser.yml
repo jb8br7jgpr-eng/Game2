@@ -24,6 +24,18 @@ jobs:
           name: archipel-browser-screenshots
           path: artifacts/
 
+
+  online:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tester deux téléphones et l'autorité du serveur en ligne
+        run: node tests/online-api.mjs
+
   prototype-v08:
     runs-on: ubuntu-latest
     timeout-minutes: 12
