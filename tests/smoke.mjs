@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {newGame,makeEdges,owned,score,connected,neighborIds,rollForStart,chooseStart,
- canNavigate,canAttack,navigate,colonize,upgradeShip,upgradeIsland,attack,
+ canNavigate,canAttack,previewAttack,navigate,colonize,upgradeShip,upgradeIsland,attack,
  refugeOptions,retreat,finishTurn,beginTurn} from "../game.js";
 
 function rng(seed=1143){return()=>((seed=(Math.imul(1664525,seed)+1013904223)>>>0)/4294967296)}
@@ -20,6 +20,24 @@ for(let k=0;k<10;k++){
  const seen=new Set([k]),todo=[k];
  while(todo.length)for(const x of neighborIds(s,todo.shift()))if(!seen.has(x)){seen.add(x);todo.push(x)}
  assert.equal(seen.size,10,"all ten islands connected");
+}
+// Repeated seeds guard against dead ends, overlapping islands and disconnected seas.
+for(let seed=1;seed<=55;seed++){
+ const map=newGame(rng(seed*335));
+ assert.equal(map.islands.length,10);
+ for(let i=0;i<10;i++){
+  const degree=neighborIds(map,i).length;
+  assert.ok(degree>=2,"all islands have at least two exits, seed "+seed+", island "+i);
+  assert.ok(degree<=6,"avoid excessive sea routes, seed "+seed+", island "+i);
+  for(let j=i+1;j<10;j++){
+   const d=Math.hypot(map.islands[i].x-map.islands[j].x,map.islands[i].z-map.islands[j].z);
+   assert.ok(d>=5.04,"island spacing is at least 5.05 map units, seed "+seed);
+  }
+  const visited=new Set([i]),todo=[i];
+  while(todo.length)for(const j of neighborIds(map,todo.pop()))if(!visited.has(j)){visited.add(j);todo.push(j)}
+  assert.equal(visited.size,10,"every island remains connected, seed "+seed);
+ }
+ assert.ok(map.edges.length>=12&&map.edges.length<=20,"manageable sea lane count, seed "+seed);
 }
 const roll=rollForStart(s,(()=>{const x=[.92,.04];return()=>x.shift()})());
 assert.equal(roll.winner,0);
@@ -58,6 +76,17 @@ assert.ok(neighbor!==undefined);
 a2.islands[neighbor].owner=defender;
 a2.players[defender].boat=neighbor;
 assert.equal(canAttack(a2,neighbor),true);
+
+const untouched=JSON.stringify(a2);
+const forecast=previewAttack(a2,neighbor);
+assert.equal(JSON.stringify(a2),untouched,"attack forecast does not roll or change state");
+assert.equal(forecast.attackerRange[0],1+forecast.shipBonus);
+assert.equal(forecast.defenderRange[1],6+forecast.defenseBonus);
+assert.equal(forecast.defenderShipHere,true);
+assert.equal(forecast.harborBonus,1);
+assert.ok(forecast.winPercent>=0&&forecast.winPercent<=100);
+assert.equal(forecast.totalCombos,36);
+
 const fight=attack(a2,neighbor,(()=>{const rolls=[.99,.0];return()=>rolls.shift()})());
 assert.equal(fight.win,true);assert.equal(a2.islands[neighbor].owner,attacker);
 assert.equal(a2.players[attacker].wins,1);
@@ -79,5 +108,5 @@ const ui=fs.readFileSync(new URL("../app.js",import.meta.url),"utf8");
 assert.ok(html.includes('id="world"')&&html.includes('type="module"'));
 assert.ok(board.includes("WebGLRenderer")&&board.includes("CylinderGeometry")&&board.includes("ShaderMaterial"));
 assert.ok(css.includes("position:fixed")&&css.includes("100dvh"));
-assert.ok(ui.includes("battleMotion")&&ui.includes("board.sail"));
+assert.ok(ui.includes("battleMotion")&&ui.includes("board.sail")&&ui.includes("showAttackPreview"));
 console.log("PASS: 10 connected randomized 3D islands, start dice and drafting, turn economy, movement, capture, construction, combats, retreat, endgame, fullscreen UI and modules.");
