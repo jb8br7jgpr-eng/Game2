@@ -283,3 +283,44 @@ body[data-faction="aureon"]{--faction:#d8823d;--faction-shadow:#a4592a;--faction
 .dialog-card:has(.attack-forecast) .dialog-text{margin:7px 0 10px;font-size:12px}
 .dialog-card:has(.attack-forecast) .dialog-button{min-height:48px}
 @media(max-width:365px){.forecast-side{padding:10px 7px}.forecast-side>b{font-size:15px}.forecast-equation{font-size:11px}.forecast-total b{font-size:21px}}
+
+
+/* ARCHIPEL V0.6 — treasure theater and polished micro-interactions */
+.treasure-reveal{
+ position:relative;overflow:hidden;isolation:isolate;border:2px solid #e5bf66;
+ background:radial-gradient(ellipse at 50% 12%,#fff7d3 0%,#fff2be 30%,#f1e2cf 82%);
+ border-radius:22px;padding:16px 12px 19px;text-align:center;
+ box-shadow:inset 0 3px 12px #fff9e4,0 6px 20px #d2aa7355;
+ animation:treasureEnter .70s cubic-bezier(.19,.83,.3,1.15) both;
+}
+.treasure-reveal.ship{background:radial-gradient(ellipse at 50% 0%,#f1e4ff,#e9e3f7 75%)}
+.treasure-reveal.fort{background:radial-gradient(ellipse at 50% 0%,#fff0c8,#f6e7c7 75%)}
+@keyframes treasureEnter{0%{opacity:0;transform:translateY(30px) scale(.8)}70%{opacity:1;transform:translateY(-4px) scale(1.035)}100%{transform:translateY(0) scale(1)}}
+.treasure-aura{font-size:19px;letter-spacing:16px;margin-left:16px;color:#d2a04d;animation:treasureGlitter 1.4s ease-in-out infinite alternate}
+.treasure-reward-symbol{
+ display:grid;place-items:center;width:98px;height:98px;margin:4px auto 12px;
+ border-radius:27px;border:2px solid #f8d685;
+ background:radial-gradient(circle at 28% 19%,#fffefa,#ffe8b0 55%,#f1b865);
+ box-shadow:0 7px 0 #bc9150,0 11px 22px #bd904177;
+ font-size:50px;animation:treasureFloat 2.4s ease-in-out infinite;
+}
+.treasure-kind{font-size:10px;letter-spacing:.12em;font-weight:1000;color:#b07d3c}
+.treasure-reward-title{font-family:Georgia,serif;font-size:22px;font-weight:800;margin:7px auto;color:#684d3a}
+.treasure-amount{margin:8px auto;padding:11px 8px;max-width:320px;border:1px solid #d8b66a;
+ border-radius:12px;background:#fffaf3ed;font-size:19px;font-weight:1000;color:#7b522d;
+ box-shadow:0 3px 0 #decb9c}
+.treasure-note{font-size:10px;line-height:1.4;color:#7b6b51;font-weight:800;margin:8px auto;max-width:280px}
+.treasure-sparkles{color:#d6a954;font-size:21px;letter-spacing:.15em;animation:treasureGlitter 1.2s ease-in-out infinite alternate}
+@keyframes treasureFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-9px) rotate(3deg)}}
+@keyframes treasureGlitter{to{opacity:.25;transform:scale(1.12)}}
+.dialog-card:has(.treasure-reveal){width:min(96vw,445px);border-color:#f6d27b;box-shadow:0 9px 0 #bb944d,0 19px 70px #f6d46e77}
+.dialog-card:has(.treasure-reveal) .dialog-text{margin:8px auto 14px}
+.dialog-card:has(.treasure-reveal) .dialog-icon{font-size:31px}
+.dialog-card:has(.treasure-reveal) .dialog-title{font-size:24px}
+.dialog-card:has(.treasure-reveal) .dialog-button{background:linear-gradient(180deg,#e6b95c,#be8641);border-color:#ffe0a4;box-shadow:0 4px 0 #9b652f}
+.action{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.action:not(:disabled):active{filter:brightness(1.10)}
+.team,.control-panel,.dialog-card{backdrop-filter:blur(13px)}
+@media(prefers-reduced-motion:reduce){
+ .treasure-reveal,.treasure-reward-symbol,.treasure-sparkles,.treasure-aura{animation:none!important}
+}
