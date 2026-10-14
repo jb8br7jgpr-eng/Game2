@@ -273,11 +273,21 @@ async function doColonize(){
  finally{locked=false;refresh()}
 }
 
-function doShip(){
- try{const e=upgradeShip(state);refresh();const t=currentIsland();board.spark(t.x,t.z,0xdcbaff);toast("⛵ Navire amélioré au niveau "+e.level+" !")}catch(ex){toast(ex.message)}
+async function doShip(){
+ if(locked)return;locked=true;
+ try{
+  const e=upgradeShip(state),tile=currentIsland();refresh();
+  await board.upgradeEffect(tile.id,"ship");
+  toast("⛵ Navire amélioré au niveau "+e.level+" !");
+ }catch(ex){toast(ex.message)}finally{locked=false;refresh()}
 }
-function doFort(){
- try{const e=upgradeIsland(state);refresh();const t=currentIsland();board.spark(t.x,t.z,0xffe0b1);toast("🏰 "+t.name+" évolue : "+["Village","Ville","Ville fortifiée"][e.level]+" !")}catch(ex){toast(ex.message)}
+async function doFort(){
+ if(locked)return;locked=true;
+ try{
+  const e=upgradeIsland(state),tile=currentIsland();refresh();
+  await board.upgradeEffect(tile.id,"town");
+  toast("🏰 "+tile.name+" évolue : "+["Village","Ville","Ville fortifiée"][e.level]+" !");
+ }catch(ex){toast(ex.message)}finally{locked=false;refresh()}
 }
 function showAttackPreview(id){
  if(locked)return;
