@@ -101,3 +101,13 @@ button:active:not(:disabled){transform:translateY(2px) scale(.98)}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* Lightweight 2D labels accurately anchored to the 3D islands. */
+.markers{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.island-label{position:absolute;transform:translate(-50%,29px);display:flex;flex-direction:column;align-items:center;white-space:nowrap;padding:3px 6px 4px;min-width:58px;border-radius:9px;background:linear-gradient(#fffaf0e8,#f3e8cfe9);border:1px solid #d2b77d;color:#33535a;box-shadow:0 2px 0 #9f856266,0 3px 9px #043c5c30;line-height:1.08;transition:filter .2s,scale .2s}
+.island-label b{font-family:Georgia,serif;font-size:11px;letter-spacing:-.035em}
+.island-label span{font-size:10px;font-weight:950;margin-top:3px;color:#3e6270}
+.island-label.violet{border-color:#9e74d3;box-shadow:0 2px 0 #7340a080,0 3px 9px #043c5c35}
+.island-label.orange{border-color:#e29a54;box-shadow:0 2px 0 #bd6b3280,0 3px 9px #043c5c35}
+.island-label.active{filter:drop-shadow(0 0 7px #ffe9a5);scale:1.08}
+@media(max-width:375px){.island-label{min-width:51px;padding:3px 4px}.island-label b{font-size:10px}.island-label span{font-size:9px}}
