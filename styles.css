@@ -239,7 +239,8 @@ body[data-faction="aureon"]{--faction:#d8823d;--faction-shadow:#a4592a;--faction
 .pip{width:10px;height:10px;border-radius:50%;margin:auto;background:transparent}
 .die-v .pip.filled{background:radial-gradient(circle at 30% 25%,#ae8bde,#6b439c);box-shadow:inset 1px 2px 2px #50357b}
 .die-a .pip.filled{background:radial-gradient(circle at 30% 25%,#ffc27d,#c77528);box-shadow:inset 1px 2px 2px #8e561e}
-.die-player{font-size:10px;font-weight:1000;letter-spacing:.07em;color:#726382}
+.die-player{font-size:11px;font-weight:1000;letter-spacing:.015em;color:#726382;max-width:120px;line-height:1.3;overflow-wrap:anywhere;text-align:center;white-space:normal;padding:0 3px}
+.die-world{min-width:88px;max-width:120px;flex:0 1 120px}
 .die-a .die-player{color:#b2682b}
 .die-duel{font-size:14px;font-weight:1000;color:#957f63}
 .dice-settled .die-world{animation:die-land .4s ease-out}
