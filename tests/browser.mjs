@@ -32,18 +32,20 @@ try{
  const cubes=await page.locator(".die-object").count();
  assert.equal(cubes,2,"real animated 3D dice rendered for first pick");
  await page.getByRole("button",{name:/Choisir son île/}).click();
- async function tapIsland(i){
-   const rect=await page.locator(".island-label").nth(i).boundingBox();
-   assert.ok(rect,"island marker exists "+i);
-   await page.mouse.click(rect.x+rect.width/2,rect.y-29);
- }
- await tapIsland(4);
- await page.waitForTimeout(200);
- await tapIsland(5);
+ // Draft on a larger scrollable archipelago: pick two actually visible islands.
+ await page.getByRole("button",{name:"Masquer le menu d’actions"}).click();
+ const areas=await page.locator(".island-label").evaluateAll(nodes=>nodes.map((node,id)=>{
+  const r=node.getBoundingClientRect();return{id,x:r.x+r.width/2,y:r.y-28};
+ }).filter(p=>p.y>170&&p.y<690&&p.x>45&&p.x<335));
+ assert.ok(areas.length>=2,"two accessible starting islands in the current mobile view");
+ await page.mouse.click(areas[0].x,areas[0].y);
+ await page.waitForTimeout(170);
+ await page.mouse.click(areas[1].x,areas[1].y);
  await page.locator("#dialog.active").waitFor({timeout:10000});
  const title=await page.locator("#dialog-title").innerText();
  assert.ok(title.includes("conquête"),"start game modal after two island picks, got: "+title);
  await page.getByRole("button",{name:"Jouer"}).click();
+ await page.getByRole("button",{name:"Afficher le menu d’actions"}).click();
  const current=await page.locator("#stage-name").innerText();
  assert.ok(current.startsWith("Navigation • ")||current.startsWith("Action • ")||current.startsWith("Fin du tour • "),"current turn stage displayed: "+current);
  assert.equal(await page.locator(".island-label").count(),10);
@@ -61,7 +63,7 @@ try{
  const zoomedOut=Number(await canvas.getAttribute("data-camera-zoom"));
  assert.ok(zoomedOut<zoomed,"zoom-out changes camera zoom");
  await page.getByRole("button",{name:"Recentrer la carte"}).click();
- assert.ok(Math.abs(Number(await canvas.getAttribute("data-camera-zoom"))-.73)<.015,"recenter restores initial zoom");
+ assert.ok(Math.abs(Number(await canvas.getAttribute("data-camera-zoom"))-.80)<.015,"recenter restores initial zoom");
  const initialCenter=await canvas.getAttribute("data-camera-center");
  const canvasRect=await canvas.boundingBox();
  await page.mouse.move(canvasRect.x+canvasRect.width*.50,canvasRect.y+canvasRect.height*.49);
