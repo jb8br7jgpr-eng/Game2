@@ -720,7 +720,7 @@ document.addEventListener("keydown",e=>{
 
 let board;
 try{
- board=new Board3D($("world"),onIsland);reset();
+ board=new Board3D($("world"),onIsland);document.body.dataset.webglReady="true";reset();
   resumeOnline().catch(e=>console.warn("Reconnexion multijoueur",e));
  // Development-only browser hooks: never exposed on the deployed github.io host.
  if(location.hostname==="127.0.0.1"||location.hostname==="localhost"){
