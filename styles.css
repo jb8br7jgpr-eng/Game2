@@ -252,3 +252,6 @@ body[data-faction="aureon"]{--faction:#d8823d;--faction-shadow:#a4592a;--faction
 }
 @media(max-height:700px){.turn-steps{padding:1px 2px}.turn-step small{display:none}.panel-head{padding:2px 0}.panel-guide{margin:4px 2px}}
 @media(prefers-reduced-motion:reduce){.dice-settled .die-world{animation:none}}
+
+/* Move camera buttons away from the islands while keeping them easy to reach. */
+@media(max-width:650px){.camera-controls{top:34%;right:7px}.camera-btn{background:#fffaf0ef}}
