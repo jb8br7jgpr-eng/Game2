@@ -103,3 +103,7 @@ Aucune configuration Supabase n'est requise **pour le mode local actuel**. Game2
 À venir : améliorations visuelles après retours utilisateur, animations plus poussées, adaptation finale à l'iPhone et multijoueur en ligne avec serveur indépendant.
 
 Pour lancer en local : `python3 -m http.server 8000`, puis ouvrir http://localhost:8000/ .
+
+### Mise à jour — noms personnalisés sous les dés (14 octobre 2026)
+
+Le nom choisi à l'accueil pour chaque faction apparaît désormais sous son dé (lancer initial, expédition et attaque/défense), en conservant le violet pour le joueur 1 et l'orange pour le joueur 2. La mise en page accepte les noms longs sur iPhone. Le test navigateur vérifie chaque contexte.
