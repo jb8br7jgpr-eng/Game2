@@ -1,133 +1,15 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-import {FACTIONS,connected} from "./game.js?v=20261014-06";
-import {enhanceIsland,enhanceShip} from "./art-v03.js";
-import {organicFoundation,architectureDetail,shipDetail} from "./art-v04.js";
-import {craftIslandV05,craftShipV05} from "./art-v05.js";
+import {connected} from "./game.js?v=20261014-06";
 import {islandMiniature,shipMiniature} from "./art-v06.js";
 import {dockPosition} from "./docks-v06.js";
 
 // Procedural 3D toy models: real geometry, rounded silhouettes, soft sunlight.
 // No pre-rendered concept-art pasted onto flat images.
-const M={
- rock:new THREE.MeshStandardMaterial({color:0x937b64,roughness:.97,flatShading:true}),
- stone:new THREE.MeshStandardMaterial({color:0xaaa08a,roughness:.95,flatShading:true}),
- sand:new THREE.MeshStandardMaterial({color:0xffd991,roughness:.93,flatShading:true}),
- grass:new THREE.MeshStandardMaterial({color:0x59b36e,roughness:.95,flatShading:true}),
- grassLight:new THREE.MeshStandardMaterial({color:0x75c96b,roughness:.95,flatShading:true}),
- tree:new THREE.MeshStandardMaterial({color:0x319866,roughness:.94,flatShading:true}),
- treeBright:new THREE.MeshStandardMaterial({color:0x65c669,roughness:.94,flatShading:true}),
- wood:new THREE.MeshStandardMaterial({color:0xb9814a,roughness:.81}),
- woodDark:new THREE.MeshStandardMaterial({color:0x704832,roughness:.88}),
- roof:new THREE.MeshStandardMaterial({color:0xed854f,roughness:.88}),
- roofRed:new THREE.MeshStandardMaterial({color:0xd76c54,roughness:.88}),
- wall:new THREE.MeshStandardMaterial({color:0xffe9c8,roughness:.89}),
- fortress:new THREE.MeshStandardMaterial({color:0xdecba5,roughness:.94}),
- window:new THREE.MeshStandardMaterial({color:0x6a8da1,roughness:.4}),
- gold:new THREE.MeshStandardMaterial({color:0xeab95d,metalness:.3,roughness:.32}),
- cannon:new THREE.MeshStandardMaterial({color:0x4c5968,metalness:.27,roughness:.55}),
- pearl:new THREE.MeshStandardMaterial({color:0xfff8df,roughness:.27}),
- flower:new THREE.MeshStandardMaterial({color:0xe576a5,roughness:.76}),
- coral:new THREE.MeshStandardMaterial({color:0xe48291,roughness:.83}),
- lake:new THREE.MeshStandardMaterial({color:0x48cbdc,transparent:true,opacity:.85,roughness:.21}),
- volcanic:new THREE.MeshStandardMaterial({color:0x70716e,roughness:1,flatShading:true}),
- purple:new THREE.MeshStandardMaterial({color:0x915ad6,roughness:.8,side:THREE.DoubleSide}),
- orange:new THREE.MeshStandardMaterial({color:0xfa962e,roughness:.8,side:THREE.DoubleSide}),
- foam:new THREE.MeshBasicMaterial({color:0xebfffb,transparent:true,opacity:.49,depthWrite:false})
-};
 const v=(x,y,z)=>new THREE.Vector3(x,y,z);
 const mesh=(geometry,material,x=0,y=0,z=0,cast=true)=>{
   const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);
   m.castShadow=cast;m.receiveShadow=true;return m;
 };
-function ball(parent,mat,x,y,z,rx,ry,rz,segments=10){
- const m=mesh(new THREE.SphereGeometry(1,segments,7),mat,x,y,z);
- m.scale.set(rx,ry,rz);parent.add(m);return m;
-}
-function cyl(parent,mat,top,bottom,height,x,y,z,sides=10){
- const m=mesh(new THREE.CylinderGeometry(top,bottom,height,sides,1),mat,x,y,z);
- parent.add(m);return m;
-}
-function box(parent,mat,wx,wy,wz,x,y,z){
- const m=mesh(new THREE.BoxGeometry(wx,wy,wz),mat,x,y,z);parent.add(m);return m;
-}
-function cone(parent,mat,r,h,x,y,z,sides=8){
- const m=mesh(new THREE.ConeGeometry(r,h,sides),mat,x,y,z);parent.add(m);return m;
-}
-function tree(g,x,z,s=1){
- cyl(g,M.woodDark,.065*s,.09*s,.48*s,x,.88*s,z,6);
- ball(g,M.tree,x,1.15*s,z,.32*s,.25*s,.31*s,8);
- ball(g,M.treeBright,x-.17*s,1.22*s,z,.25*s,.22*s,.22*s,7);
- ball(g,M.tree,x+.12*s,1.35*s,z,.24*s,.20*s,.27*s,7);
-}
-function palm(g,x,z,s=1){
- const stem=cyl(g,M.wood,.055*s,.075*s,.64*s,x,.87*s,z,7);stem.rotation.z=.17;
- for(let j=0;j<5;j++){
-  const a=(Math.PI*2*j)/5;
-  const fr=ball(g,j%2?M.tree:M.treeBright,x+Math.cos(a)*.23*s,1.23*s,z+Math.sin(a)*.23*s,.29*s,.075*s,.11*s,7);
-  fr.rotation.y=-a;
- }
-}
-function house(g,x,z,variant=0,s=.88){
- box(g,M.wall,.44*s,.37*s,.41*s,x,.79,z);
- cone(g,variant?M.roofRed:M.roof,.37*s,.28*s,x,1.10,z,4).rotation.y=Math.PI/4;
- box(g,M.woodDark,.092*s,.17*s,.03*s,x,.70,z+.215*s);
-}
-function town(g,level,owner){
- const F=FACTIONS[owner],flagColor=owner===0?M.purple:M.orange;
- house(g,-.28,-.07,0,.87);house(g,.22,.29,1,.75);
- if(level>=1){
-  house(g,-.4,.45,1,.77);house(g,.44,-.39,0,.82);
-  box(g,M.wall,.4,.48,.42,.10,.85,-.02);
-  cone(g,M.roof,.36,.28,.10,1.22,-.02,4).rotation.y=Math.PI/4;
- }
- if(level>=2){
-  const wallz=[-.72,.71];
-  for(const z of wallz)box(g,M.fortress,1.45,.23,.14,0,.64,z);
-  for(const x of [-.72,.72])box(g,M.fortress,.14,.23,1.4,x,.64,0);
-  for(const [x,z] of [[-.7,-.7],[.7,.7]]){
-   cyl(g,M.fortress,.17,.19,.63,x,.83,z,7);
-   cone(g,M.roofRed,.22,.22,x,1.26,z,7);
-  }
- }
- // Warm wood quay.
- box(g,M.wood,.45,.07,.72,.06,.44,1.02);
- for(const x of [-.16,.28])cyl(g,M.woodDark,.045,.045,.25,x,.38,1.28,6);
- cyl(g,M.woodDark,.027,.027,.82,-.54,1.04,.11,7);
- const flag=mesh(new THREE.PlaneGeometry(.42,.25),flagColor,-.33,1.31,.11);
- flag.material=flagColor;g.add(flag);
- const fin=cone(g,M.gold,.095,.21,-.54,1.54,.11,5);
- return F;
-}
-function themed(g,type,seed){
- if(type==="coast"){ball(g,M.sand,.62,.50,-.61,.35,.06,.26);ball(g,M.pearl,.83,.56,-.43,.12,.07,.12);palm(g,-.55,-.35,.85)}
- else if(type==="waterfall"){
-  box(g,M.rock,.46,.68,.35,.67,.74,-.42);
-  box(g,M.lake,.17,.71,.035,.63,.73,-.19);
-  ball(g,M.lake,.69,.50,-.10,.27,.06,.18);tree(g,-.66,-.5,.75);
- }else if(type==="flower"){
-  for(let j=0;j<6;j++){const angle=(j/6)*Math.PI*2;ball(g,j%2?M.flower:M.coral,Math.cos(angle)*.73,.57,Math.sin(angle)*.64,.12,.07,.12,7)}
-  tree(g,.66,-.46,.68);
- }else if(type==="coral"){
-  for(let j=0;j<4;j++){const a=j*1.5;cone(g,j%2?M.coral:M.flower,.11,.28,Math.cos(a)*.72,.64,Math.sin(a)*.77,6)}
-  palm(g,-.66,-.35,.74);
- }else if(type==="ruins"){
-  for(const x of [-.65,-.34]){cyl(g,M.fortress,.105,.115,.47,x,.76,-.5,7);box(g,M.fortress,.5,.1,.18,-.50,1.01,-.5)}
- }else if(type==="cliff"){
-  box(g,M.rock,.55,.35,.37,.64,.64,-.48);box(g,M.sand,.54,.11,.34,.65,.88,-.48);
- }else if(type==="forest"){
-  tree(g,-.67,-.45,.78);tree(g,.65,-.43,.8);tree(g,.77,.16,.63);
- }else if(type==="volcano"){
-  const c=cone(g,M.volcanic,.4,.62,.60,.81,-.46,9);
-  cone(g,M.rock,.17,.16,.60,1.13,-.46,9);
- }else if(type==="arch"){
-  const x=.59,z=-.53;
-  box(g,M.stone,.14,.51,.16,x-.20,.73,z);
-  box(g,M.stone,.14,.51,.16,x+.20,.73,z);
-  box(g,M.stone,.57,.14,.16,x,.98,z);
- }else if(type==="mist"){
-  for(let j=0;j<3;j++)ball(g,M.foam,.46+(j-.9)*.12,.59,-.47+(j%2)*.12,.33,.11,.18,9);
- }
-}
 function island3D(tile){
  const group=islandMiniature(tile,THREE);
  group.position.set(tile.x,.03,tile.z);
@@ -562,7 +444,9 @@ export class Board3D{
     halo.material.opacity=Math.max(0,.70*(1-u));
     this.center.lerpVectors(previous.center,v(island.x,0,island.z),Math.sin(Math.min(1,u*1.35)*Math.PI*.5)*.76);
     this.scale=THREE.MathUtils.lerp(previous.scale,Math.max(previous.scale,1.12),Math.sin(Math.min(1,u*1.6)*Math.PI*.5));
-    this.updateCamera();this.resize();
+    this.updateCamera();
+    this.camera.zoom=this.scale;this.camera.updateProjectionMatrix();
+    this.canvas.dataset.cameraZoom=this.scale.toFixed(3);
     if(u<1)requestAnimationFrame(frame);
     else resolve();
    };requestAnimationFrame(frame);
