@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#086b80">
 <meta name="description" content="ARCHIPEL V0.8 — prototype graphique 3D interactif, île tropicale et bateau miniature.">
-<title>ARCHIPEL V0.8 — Atelier graphique</title>
-<link rel="stylesheet" href="./prototype-v08.css?v=20261014-a">
+<title>ARCHIPEL V0.8.1 — Hero Island</title>
+<link rel="stylesheet" href="./prototype-v08.css?v=20261014-b">
 </head>
 <body>
 <canvas id="scene" aria-label="Prototype 3D d'île tropicale, d'eau animée et de voilier"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <header class="masthead">
  <div class="symbol">✧</div>
- <div class="heading"><div class="brand">ARCHIPEL <span>V0.8</span></div><p>Atelier graphique · île témoin</p></div>
+ <div class="heading"><div class="brand">ARCHIPEL <span>V0.8.1</span></div><p>Hero Island · modèles 3D texturés</p></div>
  <a class="back" href="./index.html" aria-label="Retour au jeu complet">↗ <span>Jeu actuel</span></a>
 </header>
 <div class="helper" id="helper">Glisse pour tourner · Pince pour zoomer · Admire les détails</div>
@@ -23,7 +23,7 @@
  <button id="camera-reset" aria-label="Recentrer la caméra">⌖</button>
 </nav>
 <div class="controls">
- <div class="info"><span class="eyebrow">DÉMO GRAPHIQUE INTERACTIVE</span><strong>La crique des embruns</strong><span>Village tropical &amp; voilier d'exploration</span></div>
+ <div class="info"><span class="eyebrow">MODÈLES 3D GLB · MATÉRIAUX PBR</span><strong>La crique des embruns</strong><span>Village tropical &amp; voilier d'exploration</span></div>
  <div class="actions">
   <button id="sail" class="primary">⛵ Faire naviguer</button>
   <button id="light" class="secondary">☀ Lumière du soir</button>
@@ -33,5 +33,6 @@
 <button id="ui-restore" class="restore" aria-label="Réafficher le panneau">☰ Menu</button>
 <div id="loading" role="status" aria-live="polite">Création du monde miniature…</div>
 <div id="error" class="error" role="alert" hidden></div>
-<script type="module" src="./prototype-v08.js?v=20261014-a"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
+<script type="module" src="./prototype-v08.js?v=20261014-b"></script>
 </body></html>
