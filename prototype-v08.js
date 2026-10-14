@@ -44,6 +44,8 @@ const fs=[
 " float ribbons=sin(p.x*5.3+sin(p.y*3.7+uTime*.66))+sin(p.y*5.1-sin(p.x*4.3-uTime*.74));",
 " float caustic=pow(max(0.,ribbons*.5),3.7);",
 " vec3 ocean=mix(vec3(.012,.20,.37),vec3(.024,.48,.65),.33+.20*swell);",
+" float glint=pow(.5+.5*sin(p.x*6.8+uTime*1.3+cos(p.y*3.7)),12.);",
+" ocean+=vec3(.024,.07,.073)*glint*(.18+.3*shallow);",
 " ocean=mix(ocean,vec3(.13,.78,.76),.85*shallow);",
 " ocean+=vec3(.09,.16,.14)*caustic*(.16+.52*pool);",
 " ocean+=vec3(.036,.057,.055)*(.5+.5*fine)*(.19+.25*shallow);",
@@ -51,6 +53,9 @@ const fs=[
 " float glitter=pow(max(0.,dot(reflect(-lightDirection,normalize(vNormal)),normalize(vec3(.06,.82,.45)))),15.);",
 " ocean+=vec3(.31,.35,.26)*glitter*(.13+.14*abs(fine))*uSun;",
 " float foam=exp(-pow((d+irregular-3.48-.055*sin(uTime*1.8+bearing*9.))/.23,2.));",
+" float wavelets=sin(bearing*22.0-uTime*1.75)+.35*sin(bearing*41.0+uTime*.7);",
+" float outer=exp(-pow((d+irregular-3.86-.07*sin(uTime*1.3+bearing*8.))/.33,2.));",
+" foam+=outer*(.13+.13*wavelets);",
 " foam*=.66+.22*sin(atan(q.y,q.x)*16.+uTime*1.8)+.10*fine;",
 " ocean=mix(ocean,vec3(.95,1.,.97),clamp(foam*.83,0.,.9));",
 " float alpha=mix(.97,.56,shallow);",
@@ -64,8 +69,8 @@ async function loadHeroAssets(){
   loader.load(path,gltf=>resolve(gltf.scene),undefined,reject);
  });
  const [island,boat]=await Promise.all([
-  fetchAsset("./assets/hero-island-v081.glb?v=20261014-d"),
-  fetchAsset("./assets/hero-ship-v081.glb?v=20261014-d")
+  fetchAsset("./assets/hero-island-v082.glb?v=20261014-v082"),
+  fetchAsset("./assets/hero-ship-v082.glb?v=20261014-v082")
  ]);
  island.position.set(1,0,0);
  boat.position.set(-5.35,.18,2.75);boat.rotation.y=.14;
@@ -102,7 +107,7 @@ async function loadHeroAssets(){
   }));
  seabed.rotation.x=-Math.PI/2;seabed.position.y=-.92;
  seabed.receiveShadow=false;scene.add(seabed);
- return {island,boat,quality:"GLB-PBR"};
+ return {island,boat,quality:"GLB-PBR-V082"};
 }
 function makeWater(){
  const g=new THREE.PlaneGeometry(240,240,100,100);g.rotateX(-Math.PI/2);
@@ -214,7 +219,7 @@ async function init(){
   renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
   renderer.setPixelRatio(Math.min(1.55,devicePixelRatio||1));
   renderer.outputColorSpace=THREE.SRGBColorSpace;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.34;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.28;
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   hemi=new THREE.HemisphereLight(0xeaffff,0x79919a,1.75);scene.add(hemi);
   sun=new THREE.DirectionalLight(0xfff6dc,2.75);sun.position.set(-12,23,16);
