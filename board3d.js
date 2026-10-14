@@ -20,9 +20,9 @@ export class Board3D{
  constructor(canvas,onIsland){
   this.canvas=canvas;this.onIsland=onIsland;this.scene=new THREE.Scene();
   this.scene.background=new THREE.Color(0x6eced2);
-  this.scene.fog=new THREE.Fog(0x7bd5d5,38,110);
+  this.scene.fog=new THREE.Fog(0x7bd5d5,155,490);
   this.camera=new THREE.OrthographicCamera(-4,4,9,-9,.1,680);
-  this.camera.position.set(6.5,16.5,30);this.camera.lookAt(0,0,0);
+  this.camera.position.set(26,66,120);this.camera.lookAt(0,0,0);
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
   this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.3));
   this.renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -121,7 +121,7 @@ export class Board3D{
  updateCamera(){
   this.center.x=THREE.MathUtils.clamp(this.center.x,-36,36);
   this.center.z=THREE.MathUtils.clamp(this.center.z,-36,36);
-  this.camera.position.set(this.center.x+6.5,16.5,this.center.z+30);
+  this.camera.position.set(this.center.x+26,66,this.center.z+120);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   this.canvas.dataset.cameraCenter=this.center.x.toFixed(3)+","+this.center.z.toFixed(3);
   this.positionMarkers();
