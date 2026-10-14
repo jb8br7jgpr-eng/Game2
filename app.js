@@ -289,6 +289,10 @@ document.addEventListener("keydown",e=>{
 let board;
 try{
  board=new Board3D($("world"),onIsland);reset();
+ // Development-only browser hooks: never exposed on the deployed github.io host.
+ if(location.hostname==="127.0.0.1"||location.hostname==="localhost"){
+  window.__ARCHIPEL_TEST={getState:()=>state,refresh,showAttackPreview};
+ }
 }catch(ex){
  console.error("Erreur de rendu 3D",ex);
  $("fallback").classList.remove("hidden");
