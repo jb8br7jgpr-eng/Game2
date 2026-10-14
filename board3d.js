@@ -290,7 +290,7 @@ export class Board3D{
   this.positionMarkers();
  }
  centerView(){
-  this.center.set(0,0,0);this.scale=.73;
+  this.center.set(0,0,0);this.scale=.80;
   this.updateCamera();this.resize();
  }
  zoomBy(factor){
