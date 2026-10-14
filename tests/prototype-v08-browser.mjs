@@ -26,11 +26,20 @@ try{
 
  const counts=await page.evaluate(()=>{
   const t=window.__ARCHIPEL08_TEST,c=t.getScene().children;
-  const info={meshes:0,lights:0,modelGroups:0};
-  t.getScene().traverse(n=>{if(n.isMesh)info.meshes++;if(n.isLight)info.lights++;if(n.isGroup)info.modelGroups++});
+  const info={meshes:0,lights:0,modelGroups:0,triangles:0};
+  t.getScene().traverse(n=>{
+   if(n.isMesh){
+    info.meshes++;
+    info.triangles+=(n.geometry.index?n.geometry.index.count:n.geometry.attributes.position.count)/3;
+   }
+   if(n.isLight)info.lights++;
+   if(n.isGroup)info.modelGroups++;
+  });
   return info;
  });
- assert.ok(counts.meshes>140,"detailed model geometry: "+JSON.stringify(counts));
+ // GLB merges hundreds of fine details into a few textured GPU draw calls.
+ assert.ok(counts.meshes>=13&&counts.triangles>6000,
+   "textured GLB has rich mesh density and efficient draw calls: "+JSON.stringify(counts));
  assert.ok(counts.lights>=3,"lighting rig present");
  mkdirSync("artifacts",{recursive:true});
  await page.screenshot({path:"artifacts/archipel-v08-iphone.png"});
