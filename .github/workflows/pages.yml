@@ -28,6 +28,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Installer les outils de création des assets 3D
+        run: python -m pip install numpy==2.2.6 trimesh==4.11.1 Pillow==11.3.0
+      - name: Préfabriquer les modèles GLB et leurs textures
+        run: python scripts/build_hero_assets.py
+      - name: Vérifier les modèles exportés
+        run: python scripts/check_hero_assets.py
       - name: Configurer GitHub Pages
         uses: actions/configure-pages@v5
         with:
