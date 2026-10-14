@@ -56,8 +56,18 @@ def make_texture(name,color):
             tint=(70,42,22,35) if name=="wood" else (255,225,148,42)
             d.line((0,j,191,j+(j%5)),fill=tint,width=1)
     return im
+def normal_from_texture(im,strength=.095):
+    gray=np.asarray(im.convert("L"),dtype=np.float32)
+    dy,dx=np.gradient(gray)
+    xx=-dx*strength;yy=dy*strength
+    length=np.sqrt(1+xx*xx+yy*yy)
+    nx=xx/length;ny=yy/length;nz=1/length
+    normal=np.stack(((nx+1)*127.5,(ny+1)*127.5,(nz+1)*127.5),axis=-1)
+    return Image.fromarray(np.uint8(np.clip(normal,0,255)),"RGB")
+TEXTURES={name:make_texture(name,rgb) for name,(rgb,_) in COLORS.items()}
 MATERIALS={
- n:PBRMaterial(name=f"V081_{n}",baseColorTexture=make_texture(n,rgb),
+ n:PBRMaterial(name=f"V081_{n}",baseColorTexture=TEXTURES[n],
+      normalTexture=normal_from_texture(TEXTURES[n]) if n in ("wood","thatch","stone","grass","sand","linen") else None,
       metallicFactor=.11 if n=="bronze" else .0,roughnessFactor=rough,
       doubleSided=True)
  for n,(rgb,rough) in COLORS.items()
@@ -217,7 +227,7 @@ def build_island():
     cliff(a)
     # Submerged sandy shelf is part of the environment, beneath transparent waves.
     uv=[];n=90
-    for ring in [3.48,5.0,7.9]:
+    for ring in [3.48,7.2,42.0]:
         for k in range(n):
             t=k*2*PI/n
             uv.append((math.cos(t)*ring,-.80,math.sin(t)*ring))
