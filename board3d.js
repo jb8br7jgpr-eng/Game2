@@ -1,5 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-import {connected} from "./game.js?v=20261014-06f";
+import {connected} from "./game.js?v=20261014-07";
 import {islandMiniature,shipMiniature} from "./art-v06.js";
 import {dockPosition} from "./docks-v06.js";
 
@@ -78,7 +78,7 @@ export class Board3D{
   this.outline=new THREE.Group();this.scene.add(this.outline);
   this.currentGame=null;this.tweens=[];this.dragged=false;this.scale=.82;
   this.center=new THREE.Vector3(0,0,0);this.pointers=new Map();this.pinchDistance=0;this.lastTap=0;
-  this.wakes=[];this.wakeClock=0;this.followPoint=null;this.seaPulse=0;this.treasureFx=null;
+  this.wakes=[];this.wakeClock=0;this.followPoint=null;this.seaPulse=0;this.treasureFx=null;this.retreatTargets=[];this.refugeMarkers=new THREE.Group();this.scene.add(this.refugeMarkers);
   this.wakeGeometry=new THREE.SphereGeometry(.095,8,5);
   this.wakeMaterial=new THREE.MeshBasicMaterial({color:0xf2fffb,transparent:true,opacity:.6,depthWrite:false});
   this.markers=document.getElementById("markers");this.markerNodes=[];
@@ -242,6 +242,65 @@ export class Board3D{
   this.lastTap=now;
  }
 
+ showRetreatOptions(ids=[],player=null){
+  this.retreatTargets=[...ids];
+  for(const child of [...this.refugeMarkers.children]){
+   this.refugeMarkers.remove(child);child.geometry?.dispose();child.material?.dispose();
+  }
+  if(!ids.length){
+   this.markerNodes.forEach(node=>node.classList.remove("retreat-target"));
+   return;
+  }
+  const color=player===1?0xffbd77:0xc3a0ff;
+  for(const id of ids){
+   const tile=this.currentGame.islands[id];if(!tile)continue;
+   const outer=new THREE.Mesh(new THREE.TorusGeometry(2.02,.07,8,48),
+     new THREE.MeshBasicMaterial({color,transparent:true,opacity:.90,depthWrite:false}));
+   outer.rotation.x=-Math.PI/2;outer.position.set(tile.x,.18,tile.z);
+   outer.userData.phase=id*.91;this.refugeMarkers.add(outer);
+   const disk=new THREE.Mesh(new THREE.RingGeometry(1.72,2.13,48),
+     new THREE.MeshBasicMaterial({color,transparent:true,opacity:.23,side:THREE.DoubleSide,depthWrite:false}));
+   disk.rotation.x=-Math.PI/2;disk.position.set(tile.x,.12,tile.z);
+   disk.userData.phase=id*.91+1;this.refugeMarkers.add(disk);
+  }
+  this.markerNodes.forEach((node,id)=>node.classList.toggle("retreat-target",ids.includes(id)));
+ }
+ frameIslands(ids=[]){
+  if(!ids.length)return this.centerView();
+  const tiles=ids.map(id=>this.currentGame.islands[id]).filter(Boolean);
+  const avg=tiles.reduce((a,t)=>({x:a.x+t.x,z:a.z+t.z}),{x:0,z:0});
+  this.center.set(avg.x/tiles.length,0,avg.z/tiles.length);this.updateCamera();
+  this.scale=this.overviewZoom();
+  if(ids.length===1)this.scale=Math.max(1.18,this.scale);
+  else if(ids.length<=3)this.scale=Math.max(.62,this.scale);
+  this.resize();
+ }
+ async expeditionEffect(id,success){
+  const tile=this.currentGame?.islands[id];if(!tile)return;
+  const root=new THREE.Group();root.position.set(tile.x,.38,tile.z);this.scene.add(root);
+  const colors=success?[0xffe0a0,0xb1f4bd,0xfff1ca]:[0xa4d0e1,0xc9d3e3,0xe8f7fb];
+  const materials=colors.map(c=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.87,depthWrite:false}));
+  const geometry=new THREE.IcosahedronGeometry(.088,0);
+  for(let i=0;i<20;i++){
+   const angle=i*Math.PI*2/20,orb=new THREE.Mesh(geometry,materials[i%3]);
+   orb.position.set(Math.cos(angle)*1.72,.09+Math.sin(i*1.9)*.09,Math.sin(angle)*1.72);
+   orb.userData.angle=angle;orb.userData.phase=i*.34;root.add(orb);
+  }
+  const start=performance.now();
+  await new Promise(resolve=>{
+   const tick=now=>{
+    const t=Math.min(1,(now-start)/(success?1000:680));
+    for(const orb of root.children){
+     const angle=orb.userData.angle+t*(success?4.2:-1.8),radius=1.6+(success?.36*t:-.22*t);
+     orb.position.set(Math.cos(angle)*radius,.15+Math.sin(t*Math.PI*2+orb.userData.phase)*.24+.55*t,Math.sin(angle)*radius);
+     orb.scale.setScalar(Math.max(.01,1-t));
+    }
+    if(t>=1)resolve();else requestAnimationFrame(tick);
+   };requestAnimationFrame(tick);
+  });
+  this.scene.remove(root);geometry.dispose();materials.forEach(m=>m.dispose());
+  this.spark(tile.x,tile.z,success?0xffdca3:0xb6daec);
+ }
  // Exact same offshore berth is used at spawn, after upgrades and after every voyage.
  boatTarget(player,id){
   const p=this.currentGame.players[player],pt=dockPosition(this.currentGame.islands,id,player,p.ship);
@@ -250,6 +309,7 @@ export class Board3D{
  rebuild(game){
   this.currentGame=game;
   this.water.uniforms.islands.value=game.islands.map(t=>new THREE.Vector2(t.x,t.z));
+  this.showRetreatOptions([]);
   this.markerNodes=[];
   if(this.markers){
    this.markers.replaceChildren();
@@ -509,6 +569,7 @@ export class Board3D{
   requestAnimationFrame(()=>this.animate());
   const dt=Math.min(.06,this.clock.getDelta()),time=this.clock.elapsedTime;
   this.water.uniforms.time.value=time;
+  for(const orb of this.refugeMarkers.children){orb.material.opacity=(orb.geometry.type==="RingGeometry"?.20:.70)+.13*Math.sin(time*3.7+orb.userData.phase);orb.rotation.z=Math.sin(time*.6)*.012}
   this.animateWake(dt);
   if(this.followPoint){
    this.center.x=THREE.MathUtils.lerp(this.center.x,this.followPoint.x,.032);
