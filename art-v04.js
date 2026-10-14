@@ -24,8 +24,9 @@ function terrace(group,T,material,radius,heightTop,heightBottom,seed,ripple=0){
  vertices.push(0,heightTop+.008,0);
  for(let i=0;i<n;i++){
   const k=(i+1)%n;
-  index.push(i,n+i,k,k,n+i,n+k);
-  index.push(n*2,i,k);
+  // Counter-clockwise winding outward and upward for Three.js front faces.
+  index.push(i,k,n+i,k,n+k,n+i);
+  index.push(n*2,k,i);
  }
  const g=new T.BufferGeometry();
  g.setAttribute("position",new T.Float32BufferAttribute(vertices,3));
