@@ -129,6 +129,11 @@ function island3D(tile){
  cyl(g,M.sand,1.03,.96,.20,0,.48,0,11);
  cyl(g,tile.theme==="volcano"?M.grass:M.grassLight,.83,.87,.14,0,.61,0,11);
  const shore=cyl(g,M.foam,1.11,1.1,.022,0,.14,0,18);shore.castShadow=false;
+ // Every neutral island has a small miniature tropical landscape.
+ // Keep the toy-sized scenery readable even before villages are founded.
+ palm(g,-.57,-.43,1.08);
+ ball(g,M.rock,.64,.69,.40,.13,.14,.15,7);
+ ball(g,M.sand,.60,.61,.28,.25,.038,.17,8);
  const landscape=new THREE.Group();themed(landscape,tile.theme,tile.id);
  landscape.scale.setScalar(1.12);landscape.position.y=-.065;g.add(landscape);
  if(tile.owner!==null){
@@ -144,7 +149,7 @@ function island3D(tile){
 function ship3D(player,level){
  const g=new THREE.Group(),orange=player===1;
  const sailMat=orange?M.orange:M.purple,trim=orange?0xe5b56c:0xbeb4dd;
- const SIZE=[.66,.83,1.01][level-1];
+ const SIZE=[.86,1.08,1.30][level-1];
  ball(g,M.woodDark,0,.20,0,.36,.20,.70);
  ball(g,M.wood,0,.27,-.07,.36,.19,.65);
  cone(g,M.woodDark,.23,.38,0,.18,-.73,5).rotation.x=Math.PI/2;
