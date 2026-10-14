@@ -5,8 +5,12 @@ import {
 } from "./game.js?v=20261014-08";
 import {Board3D} from "./board3d.js?v=20261014-08";
 import {animateDice} from "./dice-v04.js?v=20261014-names";
+import {OnlineClient,shareUrl} from "./online.js?v=20261014-online";
 const $=id=>document.getElementById(id);
 let state=newGame(),locked=false;
+let online=null,onlineRoom=null,onlineBusy=false;
+const isOnline=()=>!!online&&!!onlineRoom;
+const mySeat=()=>onlineRoom?.yourSeat;
 const FACTION_SIGNS=["☾","☀"];
 const alertBox=$("toast");
 const dialog=$("dialog"),dialogTitle=$("dialog-title"),dialogText=$("dialog-text"),
@@ -79,9 +83,16 @@ function updateHud(){
  const tileInfo=state.selected===null?null:state.islands[state.selected];
  $("island-detail").classList.toggle("empty",!tileInfo);
  $("island-detail").innerHTML=tileInfo?
-  '<div class="tile-name">'+escapeHTML(tileInfo.name)+'</div><span class="tile-owner">'+(tileInfo.owner===null?"Île neutre · difficulté "+tileInfo.difficulty:name(tileInfo.owner)+" · "+["Village","Ville","Ville fortifiée"][tileInfo.level])+'</span><span class="tile-income">🌲 +'+tileInfo.wood+' &nbsp; 🪨 +'+tileInfo.stone+'</span>'
+  '<div class="tile-name">'+escapeHTML(tileInfo.name)+'</div><span class="tile-owner">'+(tileInfo.owner===null?"Île neutre · difficulté "+tileInfo.difficulty:escapeHTML(name(tileInfo.owner))+" · "+["Village","Ville","Ville fortifiée"][tileInfo.level])+'</span><span class="tile-income">🌲 +'+tileInfo.wood+' &nbsp; 🪨 +'+tileInfo.stone+'</span>'
   :'<span class="tile-name">L’archipel</span><span class="tile-owner">10 îles à explorer</span>';
  const actions=$("actions");actions.replaceChildren();
+ if(isOnline()){
+  const actor=stage==="roll"?0:stage==="draft"?state.chooser:stage==="retreat"?1-state.current:stage==="play"?state.current:null;
+  if(actor!==null&&actor!==mySeat()){
+   actions.appendChild(button("⏳ &nbsp; "+escapeHTML(name(actor))+" joue sur son téléphone",()=>{},false,"hero"));
+   return;
+  }
+ }
  if(stage==="roll"){actions.appendChild(button("🎲 &nbsp; Lancer les dés",doRoll,true,"hero"));return}
  if(stage==="draft"){actions.appendChild(button("🏝️ &nbsp; Voir les 10 îles",openIslandPicker,true,"hero"));return}
  if(stage==="ended"){actions.appendChild(button("↻ &nbsp; Revanche",reset,true,"hero"));return}
@@ -99,6 +110,8 @@ function updateHud(){
 function escapeHTML(s){return s.replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
 function refresh(){board.sync(state);updateHud()}
 function reset(){
+ if(online){online.dispose();online.clear();online=null;onlineRoom=null}
+ $("online-lobby").hidden=true;
  const previous=state?.players?.map(p=>p.name)||FACTIONS.map(f=>f.name);
  state=newGame();locked=false;
  state.players.forEach((p,i)=>{p.name=previous[i]||FACTIONS[i].name});
@@ -131,10 +144,11 @@ function beginAdventure(e){
  toast("⚔️ "+name(0)+" contre "+name(1)+" — que l'aventure commence !");
 }
 
-function pickStartingIsland(id){
+async function pickStartingIsland(id){
  if(state.stage!=="draft"||locked)return;
  try{
-  const tile=state.islands[id],event=chooseStart(state,id);
+  if(isOnline()&&state.chooser!==mySeat()){toast("Attends le choix de "+name(state.chooser));return}
+  const tile=state.islands[id],event=isOnline()?await onlineAction("choose-start",{island:id}):chooseStart(state,id);
   board.sync(state);
   refresh();
   board.spark(tile.x,tile.z,0xf7df98);
@@ -179,9 +193,10 @@ async function onIsland(id){
  if(locked||dialog.classList.contains("active"))return;
  const t=state.islands[id];
  if(state.stage==="roll"){toast("Commence par lancer les dés.");return}
- if(state.stage==="draft"){pickStartingIsland(id);return;}
- if(state.stage==="retreat"){if(refugeOptions(state).includes(id)){confirmRetreat(id)}else toast("Choisis une île lumineuse pour ton refuge.");return}
+ if(state.stage==="draft"){if(isOnline()&&state.chooser!==mySeat())toast("Attends "+name(state.chooser));else pickStartingIsland(id);return;}
+ if(state.stage==="retreat"){if(isOnline()&&mySeat()!==1-state.current){toast("Attends le défenseur.");return}if(refugeOptions(state).includes(id)){confirmRetreat(id)}else toast("Choisis une île lumineuse pour ton refuge.");return}
  if(state.stage!=="play")return;
+ if(isOnline()&&state.current!==mySeat()){toast("C’est à "+name(state.current)+" de jouer.");return}
  if(id===player().boat){state.selected=id;refresh();return}
  if(canAttack(state,id)){
   state.selected=id;refresh();toast("⚔️ "+t.name+" : attaque disponible dans le menu.");return;
@@ -189,7 +204,7 @@ async function onIsland(id){
  if(canNavigate(state,id)){
   state.selected=id;locked=true;updateHud();
   try{
-   const e=navigate(state,id);
+   const e=isOnline()?await onlineAction("navigate",{island:id}):navigate(state,id);
    await board.sail(e.player,e.to,800);refresh();
    board.spark(t.x,t.z,0xd7fff1);
    toast("⛵ En route vers "+t.name+" !");
@@ -210,7 +225,7 @@ function revealDiceButton(label,click){
 async function doRoll(){
  if(locked)return;locked=true;
  try{
-  const event=rollForStart(state);refresh();
+  const event=isOnline()?await onlineAction("roll"):rollForStart(state);refresh();
   modal({icon:"🎲",title:"Le destin des marées",text:"Deux dés miniatures vont déterminer qui choisit sa première île.",special:'<div id="dice-stage"></div>',buttons:[]});
   await animateDice($("dice-stage"),event.dice,[0,1],state.players.map(p=>p.name));
   dialogText.textContent=name(0)+" (violet) : "+event.dice[0]+" • "+name(1)+" (orange) : "+event.dice[1]+". "+name(event.winner)+" choisit en premier. L'autre faction jouera en premier.";
@@ -241,7 +256,7 @@ async function doColonize(){
  locked=true;
  try{
   const active=state.current,before={wood:state.players[active].wood,stone:state.players[active].stone};
-  const event=colonize(state);
+  const event=isOnline()?await onlineAction("colonize"):colonize(state);
   const tile=state.islands[event.island];
   refresh();
   modal({icon:"🎲",title:"Expédition de "+name(active),text:"Le dé roule... Il faut atteindre "+event.difficulty+" ou plus, bonus compris.",
@@ -306,7 +321,7 @@ async function doColonize(){
 async function doShip(){
  if(locked)return;locked=true;
  try{
-  const e=upgradeShip(state),tile=currentIsland();refresh();
+  const e=isOnline()?await onlineAction("upgrade-ship"):upgradeShip(state),tile=currentIsland();refresh();
   await board.upgradeEffect(tile.id,"ship");
   toast("⛵ Navire amélioré au niveau "+e.level+" !");
  }catch(ex){toast(ex.message)}finally{locked=false;refresh()}
@@ -314,7 +329,7 @@ async function doShip(){
 async function doFort(){
  if(locked)return;locked=true;
  try{
-  const e=upgradeIsland(state),tile=currentIsland();refresh();
+  const e=isOnline()?await onlineAction("upgrade-island"):upgradeIsland(state),tile=currentIsland();refresh();
   await board.upgradeEffect(tile.id,"town");
   toast("🏰 "+tile.name+" évolue : "+["Village","Ville","Ville fortifiée"][e.level]+" !");
  }catch(ex){toast(ex.message)}finally{locked=false;refresh()}
@@ -352,7 +367,7 @@ function showAttackPreview(id){
 async function playBattle(id){
  if(locked)return;locked=true;
  try{
-  const result=attack(state,id);
+  const result=isOnline()?await onlineAction("attack",{island:id}):attack(state,id);
   // Cannon approach, curling sea trail and impact precede the tangible 3D dice.
   updateHud();
   await board.battleMotion(result);
@@ -401,7 +416,7 @@ async function doRetreat(id){
  if(locked)return;
  locked=true;
  try{
-  const move=retreat(state,id);
+  const move=isOnline()?await onlineAction("retreat",{island:id}):retreat(state,id);
   board.showRetreatOptions([]);
   await board.sail(move.player,move.to,1050);
   board.viewPlayer(state.current,1.12);
@@ -410,16 +425,17 @@ async function doRetreat(id){
  }catch(ex){toast(ex.message)}
  finally{locked=false;refresh()}
 }
-function nextTurn(){
+async function nextTurn(){
+ if(locked)return;locked=true;
  try{
-  const e=finishTurn(state);refresh();
+  const e=isOnline()?await onlineAction("finish-turn"):finishTurn(state);refresh();
   if(e.type!=="end")board.viewPlayer(state.current,1.12);
   if(e.type==="end"){showEnding();return}
   const p=player();
   modal({icon:e.player===0?"☾":"☀",title:"À "+p.name+" de jouer !",
    text:"Nouvelle récolte : +"+e.income.wood+" bois et +"+e.income.stone+" pierres. Prépare ta prochaine conquête.",
    buttons:[{label:"Commencer le tour",click:()=>{}}]});
- }catch(ex){toast(ex.message)}
+ }catch(ex){toast(ex.message)}finally{locked=false;refresh()}
 }
 function showEnding(){
  if(state.stage!=="ended")return;
