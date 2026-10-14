@@ -4,19 +4,19 @@ import {FACTIONS,connected} from "./game.js";
 // Procedural 3D toy models: real geometry, rounded silhouettes, soft sunlight.
 // No pre-rendered concept-art pasted onto flat images.
 const M={
- rock:new THREE.MeshStandardMaterial({color:0x9d9c83,roughness:.97,flatShading:true}),
- stone:new THREE.MeshStandardMaterial({color:0xb2b7a4,roughness:.95,flatShading:true}),
- sand:new THREE.MeshStandardMaterial({color:0xffe6a8,roughness:.93,flatShading:true}),
- grass:new THREE.MeshStandardMaterial({color:0x7fbc69,roughness:.95,flatShading:true}),
- grassLight:new THREE.MeshStandardMaterial({color:0x9cd67c,roughness:.95,flatShading:true}),
- tree:new THREE.MeshStandardMaterial({color:0x469c68,roughness:.94,flatShading:true}),
- treeBright:new THREE.MeshStandardMaterial({color:0x72c877,roughness:.94,flatShading:true}),
+ rock:new THREE.MeshStandardMaterial({color:0x937b64,roughness:.97,flatShading:true}),
+ stone:new THREE.MeshStandardMaterial({color:0xaaa08a,roughness:.95,flatShading:true}),
+ sand:new THREE.MeshStandardMaterial({color:0xffd991,roughness:.93,flatShading:true}),
+ grass:new THREE.MeshStandardMaterial({color:0x59b36e,roughness:.95,flatShading:true}),
+ grassLight:new THREE.MeshStandardMaterial({color:0x75c96b,roughness:.95,flatShading:true}),
+ tree:new THREE.MeshStandardMaterial({color:0x319866,roughness:.94,flatShading:true}),
+ treeBright:new THREE.MeshStandardMaterial({color:0x65c669,roughness:.94,flatShading:true}),
  wood:new THREE.MeshStandardMaterial({color:0xb9814a,roughness:.81}),
  woodDark:new THREE.MeshStandardMaterial({color:0x704832,roughness:.88}),
- roof:new THREE.MeshStandardMaterial({color:0xe7a163,roughness:.88}),
- roofRed:new THREE.MeshStandardMaterial({color:0xd68565,roughness:.88}),
- wall:new THREE.MeshStandardMaterial({color:0xffefd6,roughness:.89}),
- fortress:new THREE.MeshStandardMaterial({color:0xe2d3ae,roughness:.94}),
+ roof:new THREE.MeshStandardMaterial({color:0xed854f,roughness:.88}),
+ roofRed:new THREE.MeshStandardMaterial({color:0xd76c54,roughness:.88}),
+ wall:new THREE.MeshStandardMaterial({color:0xffe9c8,roughness:.89}),
+ fortress:new THREE.MeshStandardMaterial({color:0xdecba5,roughness:.94}),
  window:new THREE.MeshStandardMaterial({color:0x6a8da1,roughness:.4}),
  gold:new THREE.MeshStandardMaterial({color:0xeab95d,metalness:.3,roughness:.32}),
  cannon:new THREE.MeshStandardMaterial({color:0x4c5968,metalness:.27,roughness:.55}),
@@ -129,8 +129,12 @@ function island3D(tile){
  cyl(g,M.sand,1.03,.96,.20,0,.48,0,11);
  cyl(g,tile.theme==="volcano"?M.grass:M.grassLight,.83,.87,.14,0,.61,0,11);
  const shore=cyl(g,M.foam,1.11,1.1,.022,0,.14,0,18);shore.castShadow=false;
- themed(g,tile.theme,tile.id);
- if(tile.owner!==null)town(g,tile.level,tile.owner);
+ const landscape=new THREE.Group();themed(landscape,tile.theme,tile.id);
+ landscape.scale.setScalar(1.12);landscape.position.y=-.065;g.add(landscape);
+ if(tile.owner!==null){
+  const settlement=new THREE.Group();town(settlement,tile.level,tile.owner);
+  settlement.scale.setScalar(1.18);settlement.position.y=-.15;g.add(settlement);
+ }
  // Invisible but genuinely 3D tap target, with tagged object.
  const pick=mesh(new THREE.CylinderGeometry(1.25,1.25,.65,18),
    new THREE.MeshBasicMaterial({visible:false}),0,.66,0,false);
@@ -178,10 +182,10 @@ export class Board3D{
   this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.7));
   this.renderer.outputColorSpace=THREE.SRGBColorSpace;
   this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  this.renderer.toneMappingExposure=1.35;
+  this.renderer.toneMappingExposure=1.18;
   this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-  this.scene.add(new THREE.HemisphereLight(0xd7ffff,0x7eac9e,2.5));
-  const sun=new THREE.DirectionalLight(0xfff1c6,3.2);
+  this.scene.add(new THREE.HemisphereLight(0xd7ffff,0x81b3a5,1.45));
+  const sun=new THREE.DirectionalLight(0xfff1ce,2.35);
   sun.position.set(-7,20,11);sun.castShadow=true;
   sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-15;sun.shadow.camera.right=15;
   sun.shadow.camera.top=23;sun.shadow.camera.bottom=-23;sun.shadow.camera.near=.5;sun.shadow.camera.far=56;
@@ -189,14 +193,14 @@ export class Board3D{
   this.water=new THREE.ShaderMaterial({
    uniforms:{time:{value:0}},
    vertexShader:"varying vec2 uvv; void main(){uvv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
-   fragmentShader:"uniform float time;varying vec2 uvv;void main(){vec2 p=uvv*22.;float swell=sin(p.y*2.0+p.x*1.25+time*.42)*.5+.5;float waves=sin(p.y*6.2-p.x*1.8-time*.90)*.5+.5;float glimmer=smoothstep(.90,1.,sin((p.x+p.y)*7.-time*.9)*.5+.5);vec3 deep=vec3(.023,.41,.56);vec3 shallow=vec3(.06,.66,.72);vec3 col=mix(deep,shallow,.35+.37*swell+.11*waves);col+=glimmer*.045;gl_FragColor=vec4(col,1.);}"
+   fragmentShader:"uniform float time;varying vec2 uvv;void main(){vec2 p=uvv*22.;float swell=sin(p.y*2.0+p.x*1.25+time*.42)*.5+.5;float waves=sin(p.y*6.2-p.x*1.8-time*.90)*.5+.5;float glimmer=smoothstep(.90,1.,sin((p.x+p.y)*7.-time*.9)*.5+.5);vec3 deep=vec3(.025,.48,.62);vec3 shallow=vec3(.10,.73,.76);vec3 col=mix(deep,shallow,.49+.30*swell+.11*waves);col+=glimmer*.045;gl_FragColor=vec4(col,1.);}"
   });
   const ocean=new THREE.Mesh(new THREE.PlaneGeometry(140,140),this.water);ocean.rotation.x=-Math.PI/2;ocean.position.y=-.15;this.scene.add(ocean);
   this.islandModels=[];this.boatModels=[null,null];this.routeGroup=new THREE.Group();this.scene.add(this.routeGroup);
   this.islandRoot=new THREE.Group();this.scene.add(this.islandRoot);
   this.boatRoot=new THREE.Group();this.scene.add(this.boatRoot);
   this.outline=new THREE.Group();this.scene.add(this.outline);
-  this.currentGame=null;this.tweens=[];this.pointer=null;this.dragged=false;this.scale=1;
+  this.currentGame=null;this.tweens=[];this.pointer=null;this.dragged=false;this.scale=.78;
   this.markers=document.getElementById("markers");this.markerNodes=[];
   this.raycaster=new THREE.Raycaster();this.mouse=new THREE.Vector2();
   this.clock=new THREE.Clock();
