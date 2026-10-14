@@ -1,3 +1,4 @@
+import {generatePositions,generateSeaLanes} from "./map-v05.js";
 // ARCHIPEL 0.2 — deterministic rule engine, independent from rendering.
 export const FACTIONS=[
   {name:"Vélyra",short:"V",color:0x8655cf,light:"#b59cf6",flag:"#8250c5"},
@@ -8,61 +9,11 @@ export const ISLANDS=[
   ["Calyssé","ruins"],["Orémis","cliff"],["Syléora","forest"],["Valcéria","volcano"],
   ["Iskaria","arch"],["Ondélys","mist"]
 ];
-// Natural placement: Poisson-disc inspired sampling in an oval archipelago.
-const FALLBACK=[[-3.5,-10.1],[.7,-11.1],[3.7,-7.2],[-2.3,-5.3],[2.5,-3.0],[-3.8,-.3],[1.4,1.5],[3.4,5.0],[-2.5,8.0],[1.4,11.4]];
-export function makePositions(rng=Math.random){
- const points=[];
- for(let tries=0;tries<5000&&points.length<10;tries++){
-  const a=rng()*Math.PI*2,r=Math.sqrt(rng());
-  const x=Math.cos(a)*r*4.55,z=Math.sin(a)*r*11.50;
-  if(points.every(p=>Math.hypot(p[0]-x,p[1]-z)>=3.35))points.push([x,z]);
- }
- // On the very rare failed sample, use an irregular seeded formation.
- if(points.length<10)return FALLBACK.map(p=>[p[0]+(rng()-.5)*.8,p[1]+(rng()-.5)*.8]);
- return points;
-}
+// v0.5 generates a larger organic archipelago with room between routes.
+export const makePositions=generatePositions;
 function mix(a,rng=Math.random){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 const dice=(rng)=>1+Math.floor(rng()*6);
-export function makeEdges(tiles){
- const lengths=[];
- for(let i=0;i<tiles.length;i++)for(let j=i+1;j<tiles.length;j++){
-  lengths.push({i,j,d:Math.hypot(tiles[i].x-tiles[j].x,tiles[i].z-tiles[j].z)});
- }
- lengths.sort((a,b)=>a.d-b.d);
- const edges=[],used=new Set([0]);
- const has=(i,j)=>edges.some(e=>e[0]===i&&e[1]===j||e[0]===j&&e[1]===i);
- const degree=i=>edges.filter(e=>e.includes(i)).length;
- const crosses=(a,b)=>{
-  const A=tiles[a.i],B=tiles[a.j],C=tiles[b[0]],D=tiles[b[1]];
-  if(a.i===b[0]||a.i===b[1]||a.j===b[0]||a.j===b[1])return false;
-  const cross=(p,q,r)=>(q.x-p.x)*(r.z-p.z)-(q.z-p.z)*(r.x-p.x);
-  return cross(A,B,C)*cross(A,B,D)<0&&cross(C,D,A)*cross(C,D,B)<0;
- };
- // Connect every island, then introduce alternate routes without a grid layout.
- while(used.size<tiles.length){
-  const e=lengths.find(e=>used.has(e.i)!==used.has(e.j));
-  if(!e)break;edges.push([e.i,e.j]);used.add(e.i);used.add(e.j);
- }
- for(let pass=0;pass<2;pass++){
-  for(let i=0;i<tiles.length;i++){
-   while(degree(i)<3){
-    const e=lengths.find(e=>(e.i===i||e.j===i)&&!has(e.i,e.j)&&
-      degree(e.i)<6&&degree(e.j)<6&&(!pass?edges.every(b=>!crosses(e,b)):true));
-    if(!e)break;edges.push([e.i,e.j]);
-   }
-  }
- }
- // 18–21 connections, balancing tactical choices and legible sea lanes.
- for(const allowCross of [false,true]){
-  for(const e of lengths){
-   if(edges.length>=20)break;
-   if(has(e.i,e.j)||degree(e.i)>=5||degree(e.j)>=5)continue;
-   if(!allowCross&&edges.some(b=>crosses(e,b)))continue;
-   edges.push([e.i,e.j]);
-  }
- }
- return edges;
-}
+export const makeEdges=generateSeaLanes;
 export function newGame(rng=Math.random){
   const places=mix(makePositions(rng),rng);
   const islands=ISLANDS.map(([name,theme],i)=>({
@@ -160,6 +111,24 @@ export function upgradeIsland(s){
   if(tile.level>=2||p.stone<cost)throw Error("Pierre insuffisante ou fortifications au maximum.");
   p.stone-=cost;tile.level++;s.actionUsed=true;s.serial++;
   return {type:"build",island:tile.id,level:tile.level,cost};
+}
+// Pure tactical forecast: no dice roll and no state mutation.
+export function previewAttack(s,id){
+ if(!canAttack(s,id))throw Error("Impossible d'attaquer cette île depuis le port actuel.");
+ const attacker=s.current,defender=1-attacker,tile=s.islands[id];
+ const shipLevel=s.players[attacker].ship,shipBonus=shipLevel-1;
+ const defenseLevel=tile.level,defenderShipHere=s.players[defender].boat===id;
+ const harborBonus=defenderShipHere?1:0,defenseBonus=defenseLevel+harborBonus;
+ let winningCombos=0;
+ for(let a=1;a<=6;a++)for(let d=1;d<=6;d++)if(a+shipBonus>d+defenseBonus)winningCombos++;
+ return {
+  island:id,attacker,defender,shipLevel,shipBonus,defenseLevel,
+  defenderShipHere,harborBonus,defenseBonus,
+  attackerRange:[1+shipBonus,6+shipBonus],
+  defenderRange:[1+defenseBonus,6+defenseBonus],
+  winningCombos,totalCombos:36,winPercent:Math.round(winningCombos/36*100),
+  tiesFavorDefender:true
+ };
 }
 export function attack(s,id,rng=Math.random){
   if(!canAttack(s,id))throw Error("Attaque impossible depuis cette position.");
