@@ -39,7 +39,7 @@ export function makeEdges(tiles){
 export function newGame(rng=Math.random){
   const places=mix(SLOTS,rng);
   const islands=ISLANDS.map(([name,theme],i)=>({
-    id:i,name,theme,x:places[i][0]+(rng()-.5)*.32,z:places[i][1]+(rng()-.5)*.32,
+    id:i,name,theme,x:places[i][0]*1.14+(rng()-.5)*.32,z:places[i][1]*1.17+(rng()-.5)*.32,
     wood:1+Math.floor(rng()*3),stone:1+Math.floor(rng()*3),owner:null,level:0
   }));
   return {
