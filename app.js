@@ -1,9 +1,9 @@
 import {
  FACTIONS,newGame,connected,owned,score,rollForStart,chooseStart,
- beginTurn,canNavigate,canAttack,navigate,colonize,upgradeShip,upgradeIsland,
+ beginTurn,canNavigate,canAttack,previewAttack,navigate,colonize,upgradeShip,upgradeIsland,
  attack,refugeOptions,retreat,finishTurn
-} from "./game.js?v=20261014-04";
-import {Board3D} from "./board3d.js?v=20261014-04";
+} from "./game.js?v=20261014-05";
+import {Board3D} from "./board3d.js?v=20261014-05";
 import {animateDice} from "./dice-v04.js";
 const $=id=>document.getElementById(id);
 let state=newGame(),locked=false;
@@ -86,7 +86,7 @@ function updateHud(){
  if(stage==="ended"){actions.appendChild(button("↻ &nbsp; Revanche",reset,true,"hero"));return}
  if(stage==="retreat"){actions.appendChild(button("⛵ &nbsp; Choisir mon refuge",pickRefuge,true,"hero"));return}
  const p=player(),tile=currentIsland(),target=state.selected===null?null:state.islands[state.selected];
- if(canAttack(state,state.selected))actions.appendChild(button("⚔️ &nbsp; Attaquer",()=>playBattle(state.selected),true,"danger"));
+ if(canAttack(state,state.selected))actions.appendChild(button("⚔️ &nbsp; Évaluer l’attaque",()=>showAttackPreview(state.selected),true,"danger"));
  if(tile.owner===null)actions.appendChild(button("🚩 &nbsp; Coloniser",doColonize,!state.actionUsed,"hero"));
  if(tile.owner===state.current){
   const shipCost=p.ship===1?10:20,townCost=tile.level===0?10:20;
@@ -166,6 +166,36 @@ function doShip(){
 }
 function doFort(){
  try{const e=upgradeIsland(state);refresh();const t=currentIsland();board.spark(t.x,t.z,0xffe0b1);toast("🏰 "+t.name+" évolue : "+["Village","Ville","Ville fortifiée"][e.level]+" !")}catch(ex){toast(ex.message)}
+}
+function showAttackPreview(id){
+ if(locked)return;
+ let p;try{p=previewAttack(state,id)}catch(e){toast(e.message);return}
+ const island=state.islands[id];
+ const outlook=p.winPercent>=60?"Avantage offensif":p.winPercent<=35?"Attaque risquée":"Forces équilibrées";
+ const details='<div class="attack-forecast">'+
+ '<div class="forecast-teams">'+
+ '<section class="forecast-side faction-'+p.attacker+'"><div class="forecast-label">⚔️ ATTAQUANT</div><b>'+name(p.attacker)+'</b>'+
+ '<div class="forecast-equation"><span>🎲 Dé 1–6</span><strong>+ '+p.shipBonus+'</strong></div>'+
+ '<div class="forecast-caption">⛵ Navire niveau '+p.shipLevel+' → bonus +'+p.shipBonus+'</div>'+
+ '<div class="forecast-total">Force possible <b>'+p.attackerRange[0]+'–'+p.attackerRange[1]+'</b></div></section>'+
+ '<section class="forecast-side faction-'+p.defender+'"><div class="forecast-label">🛡️ DÉFENSEUR</div><b>'+name(p.defender)+'</b>'+
+ '<div class="forecast-equation"><span>🎲 Dé 1–6</span><strong>+ '+p.defenseBonus+'</strong></div>'+
+ '<div class="forecast-caption">🏰 '+["Village","Ville","Ville fortifiée"][p.defenseLevel]+' → +'+p.defenseLevel+'</div>'+
+ '<div class="forecast-caption">⛵ Bateau défensif : '+(p.defenderShipHere?'+1 présent':'0 absent')+'</div>'+
+ '<div class="forecast-total">Force possible <b>'+p.defenderRange[0]+'–'+p.defenderRange[1]+'</b></div></section></div>'+
+ '<div class="forecast-chance"><div class="forecast-chance-head"><span>'+outlook+'</span><strong>'+p.winPercent+' %</strong></div>'+
+ '<div class="forecast-meter"><div style="width:'+p.winPercent+'%"></div></div>'+
+ '<small>'+p.winningCombos+' combinaisons gagnantes sur 36. Une égalité favorise toujours le défenseur.</small></div>'+
+ '<div class="forecast-risk">⚠️ Si tu perds : ton navire perd un niveau (minimum 1) et retourne à son port.<br>✅ Si tu gagnes : l’île change de camp et perd un niveau de fortification.</div></div>';
+ modal({icon:"⚔️",title:"Attaquer "+island.name+" ?",
+  text:"Voici les forces et les bonus avant de prendre ta décision.",special:details,
+  buttons:[
+   {label:"Annuler",secondary:true,click:()=>toast("Attaque annulée : aucune action consommée.")},
+   {label:"⚔️ Attaquer !",click:()=>{
+     if(canAttack(state,id))playBattle(id);else toast("La cible n'est plus attaquable.");
+   }}
+  ]
+ });
 }
 async function playBattle(id){
  if(locked)return;locked=true;
