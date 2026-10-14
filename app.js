@@ -512,8 +512,19 @@ async function onlineOpponentEvent(event){
    else if(state.stage==="ended")showEnding();
   });
  }else if(["colonize","expedition","treasure"].includes(event.type)){
-  const success=event.success;
-  toast((success?"🏝️ Expédition réussie : ":"🌧️ Expédition échouée : ")+state.islands[event.island]?.name);
+  const tile=state.islands[event.island];
+  modal({icon:"🧭",title:"Expédition de "+name(event.player),
+   text:"Exploration de "+tile.name+" : lancement du dé partagé.",
+   special:'<div id="dice-stage"></div><div class="expedition-roll-score"></div>',buttons:[]});
+  await animateDice($("dice-stage"),[event.die],[event.player],state.players.map(p=>p.name));
+  const score=dialogSpecial.querySelector(".expedition-roll-score");
+  if(score)score.textContent="🎲 "+event.die+" + "+event.bonus+" = "+event.total+" · Objectif "+event.difficulty;
+  dialogIcon.textContent=event.success?"🏝️":"🌧️";
+  dialogTitle.textContent=event.success?"Colonisation réussie !":"Expédition repoussée !";
+  dialogText.textContent=event.success?name(event.player)+" prend "+tile.name+" !" +
+   (event.type==="treasure"?" 💎 Un trésor a été découvert ("+event.gift+").":""):
+   "Le navire reste sur l'île : une nouvelle tentative sera possible au prochain tour.";
+  revealDiceButton("Continuer",()=>{});
  }else if(event.type==="turn"){
   modal({icon:event.player===0?"☾":"☀",title:"À "+name(event.player)+" de jouer !",
    text:event.player===mySeat()?"C'est ton tour de conquérir l'archipel !":"L'adversaire réfléchit à son prochain mouvement.",
@@ -543,7 +554,24 @@ function receiveOnlineRoom(room,self=false){
    document.body.classList.remove("in-lobby");
    dialog.classList.remove("active");
    board.rebuild(state);
-  }else board.sync(state);
+  }else{
+   // Save the pre-sync vessel position. Server state is applied immediately,
+   // but the player's actual voyage should still visibly cross the sea.
+   const travel=room.lastEvent;
+   const moving=travel&&["navigate","retreat"].includes(travel.type)&&
+    Number.isInteger(travel.player)&&travel.to!==undefined;
+   const model=moving?board.boatModels[travel.player]?.group:null;
+   const origin=model?.position.clone();
+   board.sync(state);
+   if(origin&&model){
+    model.position.copy(origin);
+    if(!self){
+     board.sail(travel.player,travel.to,860).then(()=>{
+      if(state.stage==="play"&&state.current===travel.player)board.viewPlayer(state.current,1.12);
+     }).catch(e=>console.warn("Animation de navire distant",e));
+    }
+   }
+  }
   if(first||state.stage==="play"&&(prior?.current!==state.current||oldStage!=="play")){
    board.viewPlayer(state.current,1.12);
   }
