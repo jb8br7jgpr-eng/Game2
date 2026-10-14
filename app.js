@@ -66,7 +66,7 @@ function updateHud(){
  const caption=$("status-line"),stageName=$("stage-name"),guide=$("guide");
  guide.style.display=stage==="play"||stage==="retreat"||stage==="ended"?"none":"";
  if(stage==="roll"){stageName.textContent="Le choix des îles";caption.textContent="Deux royaumes. Un archipel.";guide.textContent="Lancez les dés pour commencer."}
- if(stage==="draft"){stageName.textContent=name(state.chooser)+" choisit son île";caption.textContent="Touchez une île libre.";guide.textContent="Les ressources sont visibles pour chaque île."}
+ if(stage==="draft"){stageName.textContent=name(state.chooser)+" choisit son île";caption.textContent="Exploration ou choix guidé";guide.textContent="Touche une île ou ouvre la liste des 10 territoires."}
  if(stage==="play"){
   const p=player(),tile=currentIsland();
   stageName.textContent=state.actionUsed?"Fin du tour • "+p.name:state.moveUsed?"Action • "+p.name:"Navigation • "+p.name;
@@ -82,7 +82,7 @@ function updateHud(){
   :'<span class="tile-name">L’archipel</span><span class="tile-owner">10 îles à explorer</span>';
  const actions=$("actions");actions.replaceChildren();
  if(stage==="roll"){actions.appendChild(button("🎲 &nbsp; Lancer les dés",doRoll,true,"hero"));return}
- if(stage==="draft"){actions.appendChild(button("🏝️ &nbsp; Choisir une île",()=>toast("Touchez directement une île libre sur la carte."),true,"soft"));return}
+ if(stage==="draft"){actions.appendChild(button("🏝️ &nbsp; Voir les 10 îles",openIslandPicker,true,"hero"));return}
  if(stage==="ended"){actions.appendChild(button("↻ &nbsp; Revanche",reset,true,"hero"));return}
  if(stage==="retreat"){actions.appendChild(button("⛵ &nbsp; Choisir mon refuge",pickRefuge,true,"hero"));return}
  const p=player(),tile=currentIsland(),target=state.selected===null?null:state.islands[state.selected];
@@ -101,17 +101,55 @@ function reset(){
  state=newGame();locked=false;board.rebuild(state);refresh();
  modal({icon:"🏝️",title:"Bienvenue dans ARCHIPEL",text:"Deux factions rivales, dix îles et une mer pleine de surprises. Pince pour zoomer, glisse pour explorer, ou masque l’interface pour admirer ton archipel.",buttons:[{label:"Découvrir l'archipel",click:()=>{}}]});
 }
+function pickStartingIsland(id){
+ if(state.stage!=="draft"||locked)return;
+ try{
+  const tile=state.islands[id],event=chooseStart(state,id);
+  board.sync(state);
+  refresh();
+  board.spark(tile.x,tile.z,0xf7df98);
+  if(event.type==="chosen"){
+   board.centerView();
+   toast("🏝️ "+name(event.player)+" prend "+tile.name+". À "+name(event.next)+" !");
+  }else{
+   board.viewIsland(state.players[state.current].boat,1.12);
+   modal({icon:"⛵",title:"Que la conquête commence !",
+    text:name(event.player)+" joue en premier pour compenser son second choix d'île.",
+    buttons:[{label:"Jouer",click:()=>{}}]});
+  }
+ }catch(ex){toast(ex.message)}
+}
+function openIslandPicker(){
+ if(state.stage!=="draft")return;
+ const candidates=state.islands.filter(tile=>tile.owner===null);
+ const cards=candidates.map(tile=>
+  '<div class="draft-island-card" data-island="'+tile.id+'">'+
+  '<div class="draft-island-name">'+escapeHTML(tile.name)+'</div>'+
+  '<div class="draft-island-resources">🌲 '+tile.wood+' bois / tour · 🪨 '+tile.stone+' pierre / tour</div>'+
+  '<div class="draft-island-controls">'+
+  '<button class="draft-view" data-island="'+tile.id+'" type="button">🔎 Observer</button>'+
+  '<button class="draft-choose" data-island="'+tile.id+'" type="button">Choisir cette île</button>'+
+  '</div></div>').join("");
+ modal({icon:"🗺️",title:"Choisir sa première île",
+  text:name(state.chooser)+" : compare les ressources puis sélectionne ton territoire. Tu peux aussi observer son modèle en 3D.",
+  special:'<div class="draft-list">'+cards+'</div>',
+  buttons:[{label:"Retour à la carte",secondary:true,click:()=>{}}]});
+ const list=dialogSpecial.querySelector(".draft-list");
+ list.addEventListener("click",e=>{
+  const b=e.target.closest("button[data-island]");if(!b)return;
+  const id=Number(b.dataset.island);
+  dialog.classList.remove("active");
+  if(b.classList.contains("draft-view")){
+   board.viewIsland(id,1.45);
+   toast("🔎 "+state.islands[id].name+" : touche l'île pour la sélectionner, ou rouvre la liste.");
+  }else pickStartingIsland(id);
+ });
+}
 async function onIsland(id){
  if(locked||dialog.classList.contains("active"))return;
  const t=state.islands[id];
  if(state.stage==="roll"){toast("Commence par lancer les dés.");return}
- if(state.stage==="draft"){
-  try{
-   const e=chooseStart(state,id);board.sync(state);refresh();board.spark(t.x,t.z,0xf7df98);
-   if(e.type==="chosen")toast("🏝️ "+name(e.player)+" prend "+t.name+". À "+name(e.next)+" !");
-   else modal({icon:"⛵",title:"Que la conquête commence !",text:name(e.player)+" jouera en premier, pour compenser son second choix d'île.",buttons:[{label:"Jouer",click:()=>{}}]});
-  }catch(ex){toast(ex.message)}return;
- }
+ if(state.stage==="draft"){pickStartingIsland(id);return;}
  if(state.stage==="retreat"){if(refugeOptions(state).includes(id)){doRetreat(id)}else toast("Choisis une île alliée ou un refuge neutre.");return}
  if(state.stage!=="play")return;
  if(id===player().boat){state.selected=id;refresh();return}
@@ -333,7 +371,7 @@ try{
  board=new Board3D($("world"),onIsland);reset();
  // Development-only browser hooks: never exposed on the deployed github.io host.
  if(location.hostname==="127.0.0.1"||location.hostname==="localhost"){
-  window.__ARCHIPEL_TEST={getState:()=>state,refresh,showAttackPreview,doColonize,getBoard:()=>board};
+  window.__ARCHIPEL_TEST={getState:()=>state,refresh,showAttackPreview,doColonize,getBoard:()=>board,openIslandPicker,pickStartingIsland};
  }
 }catch(ex){
  console.error("Erreur de rendu 3D",ex);
