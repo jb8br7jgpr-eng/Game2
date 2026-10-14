@@ -4,7 +4,7 @@ import {
  attack,refugeOptions,retreat,finishTurn
 } from "./game.js?v=20261014-08";
 import {Board3D} from "./board3d.js?v=20261014-08";
-import {animateDice} from "./dice-v04.js";
+import {animateDice} from "./dice-v04.js?v=20261014-names";
 const $=id=>document.getElementById(id);
 let state=newGame(),locked=false;
 const FACTION_SIGNS=["☾","☀"];
@@ -212,7 +212,7 @@ async function doRoll(){
  try{
   const event=rollForStart(state);refresh();
   modal({icon:"🎲",title:"Le destin des marées",text:"Deux dés miniatures vont déterminer qui choisit sa première île.",special:'<div id="dice-stage"></div>',buttons:[]});
-  await animateDice($("dice-stage"),event.dice,[0,1]);
+  await animateDice($("dice-stage"),event.dice,[0,1],state.players.map(p=>p.name));
   dialogText.textContent=name(0)+" (violet) : "+event.dice[0]+" • "+name(1)+" (orange) : "+event.dice[1]+". "+name(event.winner)+" choisit en premier. L'autre faction jouera en premier.";
   revealDiceButton("Choisir son île",()=>{});
  }catch(e){toast(e.message)}finally{locked=false}
@@ -246,7 +246,7 @@ async function doColonize(){
   refresh();
   modal({icon:"🎲",title:"Expédition de "+name(active),text:"Le dé roule... Il faut atteindre "+event.difficulty+" ou plus, bonus compris.",
    special:'<div id="dice-stage"></div><div class="expedition-roll-score"></div>',buttons:[]});
-  await animateDice($("dice-stage"),[event.die],[active]);
+  await animateDice($("dice-stage"),[event.die],[active],state.players.map(p=>p.name));
   dialogSpecial.querySelector(".expedition-roll-score").textContent="🎲 "+event.die+" + "+event.bonus+" = "+event.total+" · Objectif "+event.difficulty;
   await board.expeditionEffect(event.island,event.success);
   if(!event.success){
@@ -362,7 +362,7 @@ async function playBattle(id){
    text:"Le destin se joue aux dés : "+name(result.attacker)+" attaque, "+name(result.defender)+" défend.",
    special:'<div id="dice-stage"></div><div class="battle-scores" id="battle-scores" aria-live="polite"></div>',
    buttons:[]});
-  await animateDice($("dice-stage"),[result.attackerDice,result.defenderDice],[result.attacker,result.defender]);
+  await animateDice($("dice-stage"),[result.attackerDice,result.defenderDice],[result.attacker,result.defender],state.players.map(p=>p.name));
   const notes=result.win?"La conquête est réussie ! Les fortifications ennemies reculent d'un niveau.":"Attaque repoussée. Le bateau attaquant recule et perd un niveau. Les égalités favorisent le défenseur.";
   dialogIcon.textContent=result.win?"🏆":"🛡️";
   dialogTitle.textContent=result.win?"Victoire de "+name(result.attacker)+" !":"La défense tient bon !";
