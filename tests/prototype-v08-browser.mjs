@@ -16,6 +16,14 @@ try{
  await page.locator("#loading").waitFor({state:"hidden",timeout:25000});
  assert.equal(await page.locator("#error").isVisible(),false,"no fatal error overlay");
  assert.ok(await page.evaluate(()=>Boolean(window.__ARCHIPEL08_TEST?.getRenderer()?.getContext())),"3D WebGL renderer initialized");
+ assert.equal(await page.evaluate(()=>window.__ARCHIPEL08_TEST?.getVisuals()?.quality),"GLB-PBR","prebaked textured glTF models are loaded — not the old procedural fallback");
+ const materialNames=await page.evaluate(()=>{
+  const names=new Set(),scene=window.__ARCHIPEL08_TEST.getScene();
+  scene.traverse(node=>{if(node.isMesh)for(const m of Array.isArray(node.material)?node.material:[node.material])if(m?.map)names.add(m.name)});
+  return [...names];
+ });
+ assert.ok(materialNames.length>=6,"multiple distinct PBR image-textured materials actually rendered: "+JSON.stringify(materialNames));
+
  const counts=await page.evaluate(()=>{
   const t=window.__ARCHIPEL08_TEST,c=t.getScene().children;
   const info={meshes:0,lights:0,modelGroups:0};
