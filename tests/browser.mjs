@@ -45,7 +45,7 @@ try{
  assert.ok(title.includes("conquête"),"start game modal after two island picks, got: "+title);
  await page.getByRole("button",{name:"Jouer"}).click();
  const current=await page.locator("#stage-name").innerText();
- assert.ok(current.startsWith("À "),"correct turn displayed");
+ assert.ok(current.startsWith("Navigation • ")||current.startsWith("Action • ")||current.startsWith("Fin du tour • "),"current turn stage displayed: "+current);
  assert.equal(await page.locator(".island-label").count(),10);
  assert.equal(await page.locator(".turn-step").count(),3,"three-step turn guidance");
  assert.equal(await page.locator("body").getAttribute("data-faction")!==null,true,"active faction controls menu palette");
