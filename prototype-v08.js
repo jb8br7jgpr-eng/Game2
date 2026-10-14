@@ -64,8 +64,8 @@ async function loadHeroAssets(){
   loader.load(path,gltf=>resolve(gltf.scene),undefined,reject);
  });
  const [island,boat]=await Promise.all([
-  fetchAsset("./assets/hero-island-v081.glb?v=20261014-c"),
-  fetchAsset("./assets/hero-ship-v081.glb?v=20261014-c")
+  fetchAsset("./assets/hero-island-v081.glb?v=20261014-d"),
+  fetchAsset("./assets/hero-ship-v081.glb?v=20261014-d")
  ]);
  island.position.set(1,0,0);
  boat.position.set(-5.35,.18,2.75);boat.rotation.y=.14;
