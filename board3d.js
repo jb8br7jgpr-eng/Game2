@@ -197,6 +197,7 @@ export class Board3D{
   this.boatRoot=new THREE.Group();this.scene.add(this.boatRoot);
   this.outline=new THREE.Group();this.scene.add(this.outline);
   this.currentGame=null;this.tweens=[];this.pointer=null;this.dragged=false;this.scale=1;
+  this.markers=document.getElementById("markers");this.markerNodes=[];
   this.raycaster=new THREE.Raycaster();this.mouse=new THREE.Vector2();
   this.clock=new THREE.Clock();
   canvas.addEventListener("pointerdown",e=>this.pointerDown(e));
@@ -225,6 +226,17 @@ export class Board3D{
  }
  rebuild(game){
   this.currentGame=game;
+  this.markerNodes=[];
+  if(this.markers){
+   this.markers.replaceChildren();
+   game.islands.forEach(t=>{
+    const marker=document.createElement("div");
+    marker.className="island-label";
+    marker.innerHTML='<b>'+t.name+'</b><span>🌲 '+t.wood+'&nbsp; 🪨 '+t.stone+'</span>';
+    marker.setAttribute("aria-label",t.name+", "+t.wood+" bois et "+t.stone+" pierres par tour");
+    this.markers.appendChild(marker);this.markerNodes.push(marker);
+   });
+  }
   for(const g of this.islandRoot.children.slice())this.islandRoot.remove(g);
   for(const g of this.boatRoot.children.slice())this.boatRoot.remove(g);
   for(const g of this.routeGroup.children.slice())this.routeGroup.remove(g);
@@ -304,6 +316,18 @@ export class Board3D{
   requestAnimationFrame(()=>this.animate());
   const dt=Math.min(.06,this.clock.getDelta()),time=this.clock.elapsedTime;
   this.water.uniforms.time.value=time;
+  if(this.currentGame&&this.markerNodes.length){
+    const w=this.canvas.clientWidth,h=this.canvas.clientHeight;
+    this.currentGame.islands.forEach((tile,i)=>{
+      const vec=v(tile.x,.5,tile.z).project(this.camera);
+      const marker=this.markerNodes[i];
+      marker.style.left=((vec.x+1)*.5*w)+"px";
+      marker.style.top=((-vec.y+1)*.5*h)+"px";
+      marker.classList.toggle("active",this.currentGame.selected===i);
+      marker.classList.toggle("violet",tile.owner===0);
+      marker.classList.toggle("orange",tile.owner===1);
+    });
+  }
   this.boatModels.forEach((b,i)=>{if(!b)return;const g=b.group;if(!g.userData.inMotion)g.position.y=.35+Math.sin(time*2.5+i*2)*.026;g.rotation.z=Math.sin(time*1.7+i)*.029});
   for(const t of this.tweens.slice()){
    t.elapsed+=dt*1000;const u=Math.min(1,t.elapsed/t.duration),ease=u*u*(3-2*u);
